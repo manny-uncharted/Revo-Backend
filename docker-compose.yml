@@ -1,29 +1,45 @@
+version: '3.8'
+
 services:
-  postgres:
-    image: postgres:15
-    container_name: my_postgres_db
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: farmers_marketplace_api
+    ports:
+      - "3000:3000"
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-mydatabase}
-      POSTGRES_USER: ${POSTGRES_USER:-myuser}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
-      PGDATA: /data/postgres
+      - NODE_ENV=development
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=mydatabase
     volumes:
-      - postgres_data:/data/postgres
-      - ./init-scripts:/docker-entrypoint-initdb.d
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - postgres
+    networks:
+      - farmers_marketplace_network
+
+  postgres:
+    image: postgres:13
+    container_name: farmers_marketplace_db
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
     ports:
       - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-myuser} -d ${POSTGRES_DB:-mydatabase}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
-      - postgres_network
-
-networks:
-  postgres_network:
-    driver: bridge
+      - farmers_marketplace_network
 
 volumes:
   postgres_data:
+
+networks:
+  farmers_marketplace_network:
+    driver: bridge
