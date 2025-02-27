@@ -5,7 +5,7 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-import { Timestamps } from './interfaces/ timestamps.interface';
+import { Timestamps } from './interfaces/timestamps.interface';
 import { SoftDelete } from './interfaces/soft-delete.interface';
 
 @Entity()
