@@ -62,7 +62,7 @@ describe('ProductController (e2e)', () => {
       );
     });
 
-    it('should return 500 if required fields are missing', async () => {
+    it('should return 400 if required fields are missing', async () => {
       const createProductDTO = {
         description: 'Test Description',
         price: 100,
@@ -71,7 +71,7 @@ describe('ProductController (e2e)', () => {
       await request(app.getHttpServer())
         .post('/products')
         .send(createProductDTO)
-        .expect(500);
+        .expect(400);
     });
   });
 

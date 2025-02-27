@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -21,7 +22,7 @@ export class ProductService {
       const product = this.productRepository.create(createProductDTO);
       return await this.productRepository.save(product);
     } catch (error) {
-      throw new InternalServerErrorException('Failed to create product');
+      throw new BadRequestException('Failed to create product');
     }
   }
 

@@ -9,6 +9,7 @@ import { UpdateProductDTO } from '../dtos/update-product.dto';
 import {
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 
 describe('ProductService', () => {
@@ -74,7 +75,7 @@ describe('ProductService', () => {
     it('should throw an error if creation fails', async () => {
       jest.spyOn(repository, 'save').mockRejectedValueOnce(new Error());
       await expect(service.create({} as CreateProductDTO)).rejects.toThrow(
-        InternalServerErrorException,
+        BadRequestException,
       );
     });
   });
