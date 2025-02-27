@@ -11,7 +11,9 @@ async function bootstrap() {
 
   const sessionSecret = process.env.SESSION_SECRET;
   if (!sessionSecret) {
-    throw new Error('SESSION_SECRET is not defined in your environment variables');
+    throw new Error(
+      'SESSION_SECRET is not defined in your environment variables',
+    );
   }
 
   app.use(

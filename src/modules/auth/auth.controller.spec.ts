@@ -20,7 +20,10 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('should register a new user', async () => {
-      const registerDto: RegisterDto = { username: 'testuser', password: 'testpass' };
+      const registerDto: RegisterDto = {
+        username: 'testuser',
+        password: 'testpass',
+      };
       const result = await authController.register(registerDto);
       expect(result).toHaveProperty('id');
       expect(result).toHaveProperty('username', 'testuser');
@@ -29,9 +32,15 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('should login a registered user', async () => {
-      const registerDto: RegisterDto = { username: 'loginuser', password: 'loginpass' };
+      const registerDto: RegisterDto = {
+        username: 'loginuser',
+        password: 'loginpass',
+      };
       await authController.register(registerDto);
-      const loginDto: LoginDto = { username: 'loginuser', password: 'loginpass' };
+      const loginDto: LoginDto = {
+        username: 'loginuser',
+        password: 'loginpass',
+      };
 
       // Create a dummy request object with a session property
       const req: any = { session: {} };

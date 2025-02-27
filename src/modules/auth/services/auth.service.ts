@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -13,13 +17,18 @@ export class AuthService {
   ) {}
 
   async register(username: string, password: string): Promise<User> {
-    const existingUser = await this.usersRepository.findOne({ where: { username } });
+    const existingUser = await this.usersRepository.findOne({
+      where: { username },
+    });
     if (existingUser) {
       throw new BadRequestException('Username already exists');
     }
 
     const hashedPassword = await this.hashingService.hashPassword(password);
-    const newUser = this.usersRepository.create({ username, password: hashedPassword });
+    const newUser = this.usersRepository.create({
+      username,
+      password: hashedPassword,
+    });
     return this.usersRepository.save(newUser);
   }
 
@@ -50,7 +59,7 @@ export class AuthService {
     if (!user) return undefined;
 
     // Exclude the password field before returning
-    const { password: _, ...userWithoutPassword } = user;
+    const { password, ...userWithoutPassword } = user;
     return userWithoutPassword as User;
   }
 }
