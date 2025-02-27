@@ -6,7 +6,6 @@ import { LoginDto } from './dto/login.dto';
 
 describe('AuthController', () => {
   let authController: AuthController;
-  let authService: AuthService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -14,7 +13,6 @@ describe('AuthController', () => {
       providers: [AuthService],
     }).compile();
 
-    authService = module.get<AuthService>(AuthService);
     authController = module.get<AuthController>(AuthController);
   });
 

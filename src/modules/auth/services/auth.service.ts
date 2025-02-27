@@ -49,7 +49,7 @@ export class AuthService {
     }
 
     // Exclude the password field before returning
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: unusedPassword, ...userWithoutPassword } = user;
     return userWithoutPassword as User;
   }
 
@@ -59,7 +59,7 @@ export class AuthService {
     if (!user) return undefined;
 
     // Exclude the password field before returning
-    const { password, ...userWithoutPassword } = user;
+    const { password: unusedPassword, ...userWithoutPassword } = user;
     return userWithoutPassword as User;
   }
 }
