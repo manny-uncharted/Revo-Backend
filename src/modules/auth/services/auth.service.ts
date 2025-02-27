@@ -46,4 +46,8 @@ export class AuthService {
 
     return user;
   }
+
+  async findById(id: number): Promise<User | undefined> {
+    return this.users.find(user => user.id === id);
+  }
 }
