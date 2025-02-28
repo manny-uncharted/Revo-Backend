@@ -13,8 +13,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  
-  
+
   const logger = app.get(LoggerService);
   logger.setContext('Bootstrap');
   app.useLogger(logger);
