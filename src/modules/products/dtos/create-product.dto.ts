@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsOptional, IsNotEmpty, IsDate, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsNotEmpty,
+  IsDate,
+  IsArray,
+} from 'class-validator';
 
 export class CreateProductDTO {
   @IsString()
@@ -24,5 +31,4 @@ export class CreateProductDTO {
 
   @IsDate()
   harvestDate: Date;
-
 }

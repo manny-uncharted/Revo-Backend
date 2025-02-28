@@ -112,7 +112,9 @@ describe('ProductController (e2e)', () => {
     });
 
     it('should return 404 if product is not found', async () => {
-      await request(app.getHttpServer()).get('/products/550e8400-e29b-41d4-a716-446655440000').expect(404);
+      await request(app.getHttpServer())
+        .get('/products/550e8400-e29b-41d4-a716-446655440000')
+        .expect(404);
     });
   });
 
@@ -186,7 +188,9 @@ describe('ProductController (e2e)', () => {
     });
 
     it('should return 404 if product is not found', async () => {
-      await request(app.getHttpServer()).delete('/products/550e8400-e29b-41d4-a716-446655440000').expect(404);
+      await request(app.getHttpServer())
+        .delete('/products/550e8400-e29b-41d4-a716-446655440000')
+        .expect(404);
     });
   });
 });
