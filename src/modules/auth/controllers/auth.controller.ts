@@ -10,6 +10,7 @@ import { AuthService } from '../services/auth.service';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
 import { Request } from 'express';
+import { promisify } from 'util';
 
 @Controller('auth')
 export class AuthController {
@@ -23,7 +24,7 @@ export class AuthController {
       registerDto.username,
       registerDto.password,
     );
-    const { password, ...result } = user;
+    const { password: _password, ...result } = user;
     return result;
   }
 
@@ -36,21 +37,20 @@ export class AuthController {
       loginDto.password,
     );
     req.session.userId = user.id; // Session management
-    const { password, ...result } = user;
+    const { password: _password, ...result } = user;
     return result;
   }
 
-  // Logout endpoint
   @Post('logout')
-  async logout(@Req() req: Request) {
-    return new Promise<{ message: string }>((resolve, reject) => {
-      req.session.destroy((err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({ message: 'Logout successful' });
-        }
-      });
-    });
+  async logout(@Req() req: Request): Promise<{ message: string }> {
+    if (!req.session) {
+      throw new Error('Session not found');
+    }
+    
+    // Promisify the destroy function for async/await usage
+    const destroyAsync = promisify(req.session.destroy).bind(req.session);
+    
+    await destroyAsync();
+    return { message: 'Logout successful' };
   }
 }
