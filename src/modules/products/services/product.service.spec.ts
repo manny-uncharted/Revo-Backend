@@ -59,11 +59,11 @@ describe('ProductService', () => {
       const createProductDTO: CreateProductDTO = {
         name: 'Test Product',
         description: 'This is a test product',
-        price: 100.0, 
+        price: 100.0,
         unit: 'kg',
-        images: ['image1.jpg', 'image2.jpg'], 
-        stockQuantity: 10, 
-        harvestDate: new Date('2025-03-10')
+        images: ['image1.jpg', 'image2.jpg'],
+        stockQuantity: 10,
+        harvestDate: new Date('2025-03-10'),
       };
 
       const result = await service.create(createProductDTO);

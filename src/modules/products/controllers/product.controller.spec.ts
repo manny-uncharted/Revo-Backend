@@ -10,17 +10,17 @@ describe('ProductController', () => {
   let service: ProductService;
 
   const mockProduct = {
-    id: '1', 
+    id: '1',
     name: 'Test Product',
     description: 'This is a test product',
-    price: 100.0, 
+    price: 100.0,
     unit: 'kg',
-    images: ['image1.jpg', 'image2.jpg'], 
-    stockQuantity: 10, 
+    images: ['image1.jpg', 'image2.jpg'],
+    stockQuantity: 10,
     harvestDate: new Date('2025-03-10'),
-    createdAt: new Date(), 
+    createdAt: new Date(),
     updatedAt: new Date(),
-    deletedAt: null, 
+    deletedAt: null,
   };
 
   beforeEach(async () => {
@@ -53,11 +53,11 @@ describe('ProductController', () => {
       const createProductDTO: CreateProductDTO = {
         name: 'Test Product',
         description: 'This is a test product',
-        price: 100.0, 
+        price: 100.0,
         unit: 'kg',
-        images: ['image1.jpg', 'image2.jpg'], 
-        stockQuantity: 10, 
-        harvestDate: new Date('2025-03-10')
+        images: ['image1.jpg', 'image2.jpg'],
+        stockQuantity: 10,
+        harvestDate: new Date('2025-03-10'),
       };
       const result = await controller.create(createProductDTO);
       expect(service.create).toHaveBeenCalledWith(createProductDTO);
