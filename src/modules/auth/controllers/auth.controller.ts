@@ -46,10 +46,10 @@ export class AuthController {
     if (!req.session) {
       throw new Error('Session not found');
     }
-    
+
     // Promisify the destroy function for async/await usage
     const destroyAsync = promisify(req.session.destroy).bind(req.session);
-    
+
     await destroyAsync();
     return { message: 'Logout successful' };
   }
