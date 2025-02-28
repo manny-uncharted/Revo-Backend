@@ -5,17 +5,14 @@ import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { createClient } from 'redis';
-
-// Use require for connect-redis
-const RedisStoreFactory = require('connect-redis');
-const RedisStore = RedisStoreFactory(session);
+import RedisStore from 'connect-redis';
 
 dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Set up the Redis client in legacy mode for connect-redis compatibility
+  // Create the Redis client in legacy mode for compatibility
   const redisClient = createClient({
     legacyMode: true,
     url:
@@ -26,7 +23,10 @@ async function bootstrap() {
   redisClient.on('error', (err) => console.error('Redis Client Error', err));
   await redisClient.connect().catch(console.error);
 
-  // Configure session middleware
+  // Initialize the RedisStore using the ESM import syntax
+  const redisStore = new RedisStore({ client: redisClient });
+
+  // Configure session middleware with the Redis-backed store
   const sessionSecret = process.env.SESSION_SECRET;
   if (!sessionSecret) {
     throw new Error(
@@ -35,7 +35,7 @@ async function bootstrap() {
   }
   app.use(
     session({
-      store: new RedisStore({ client: redisClient }),
+      store: redisStore,
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
@@ -54,4 +54,5 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 }
+
 bootstrap();

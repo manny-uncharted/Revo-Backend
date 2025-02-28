@@ -39,4 +39,18 @@ export class AuthController {
     const { password, ...result } = user;
     return result;
   }
+
+  // Logout endpoint
+  @Post('logout')
+  async logout(@Req() req: Request) {
+    return new Promise<{ message: string }>((resolve, reject) => {
+      req.session.destroy((err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({ message: 'Logout successful' });
+        }
+      });
+    });
+  }
 }
