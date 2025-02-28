@@ -1,4 +1,10 @@
-import { IsString, IsNumber, IsOptional, IsArray, IsDate } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsArray,
+  IsDate,
+} from 'class-validator';
 
 export class UpdateProductDTO {
   @IsString()
@@ -12,7 +18,7 @@ export class UpdateProductDTO {
   @IsNumber()
   @IsOptional()
   price?: number;
-  
+
   @IsString()
   @IsOptional()
   unit?: string;

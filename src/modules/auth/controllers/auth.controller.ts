@@ -23,7 +23,7 @@ export class AuthController {
       registerDto.username,
       registerDto.password,
     );
-    const { password: _unusedPassword, ...result } = user;
+    const { password, ...result } = user;
     return result;
   }
 
@@ -36,7 +36,7 @@ export class AuthController {
       loginDto.password,
     );
     req.session.userId = user.id; // Session management
-    const { password: _unusedPassword, ...result } = user;
+    const { password, ...result } = user;
     return result;
   }
 }
