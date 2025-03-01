@@ -1,5 +1,5 @@
 import { registerAs } from '@nestjs/config';
-
+//jwt config
 export default registerAs('jwt', () => {
     const secret = process.env.JWT_SECRET || '';
     const audience = process.env.JWT_TOKEN_AUDIENCE || '';
