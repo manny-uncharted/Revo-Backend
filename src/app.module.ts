@@ -6,6 +6,7 @@ import { LoggingModule } from './modules/logging/logging.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './modules/logging/interceptors/logging.interceptor';
 import { ProductsModule } from './modules/products/products.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ProductsModule } from './modules/products/products.module';
       useClass: LoggingInterceptor,
     },
     ProductsModule,
+    OrdersModule,
   ],
 })
 export class AppModule {}
