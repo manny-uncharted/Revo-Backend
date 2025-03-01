@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsNumber,
@@ -30,5 +31,6 @@ export class CreateProductDTO {
   stockQuantity: number;
 
   @IsDate()
+  @Type(() => Date)
   harvestDate: Date;
 }
