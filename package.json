@@ -17,7 +17,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "seed": "ts-node -r tsconfig-paths/register src/database/seeds/seed.command.ts",
+    "seed:clean": "ts-node -r tsconfig-paths/register src/database/seeds/seed.command.ts --clean",
+    "seed:dev": "ts-node -r tsconfig-paths/register src/database/seeds/seed.command.ts --env=development",
+    "seed:test": "ts-node -r tsconfig-paths/register src/database/seeds/seed.command.ts --env=test --clean"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -30,6 +34,7 @@
     "@nestjs/typeorm": "^10.0.2",
     "@types/bcrypt": "^5.0.2",
     "bcrypt": "^5.1.1",
+    "better-sqlite3": "^11.9.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "connect-redis": "^8.0.1",
@@ -41,12 +46,13 @@
     "redis": "^4.7.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "winston": "^3.17.0",
-    "winston-daily-rotate-file": "^5.0.0",
     "sqlite3": "^5.1.7",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.6.0",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.4.15",

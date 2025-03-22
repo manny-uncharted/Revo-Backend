@@ -15,13 +15,13 @@ export class Product extends BaseEntity {
   @Column()
   unit: string;
 
-  @Column('json', { nullable: true })
+  @Column('simple-json', { nullable: true })
   images: string[];
 
   @Column()
   stockQuantity: number;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'datetime' })
   harvestDate: Date;
 
   @DeleteDateColumn({ nullable: true })

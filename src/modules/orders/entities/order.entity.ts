@@ -25,13 +25,13 @@ export class Order extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: false })
   stellarPublicKey: string;
 
-  @Column({ type: 'timestamp', nullable: false })
+  @Column({ type: 'datetime', nullable: false })
   paymentDeadline: Date;
 
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
   items: OrderItem[];
 
-  @Column('json', { nullable: true })
+  @Column('simple-json', { nullable: true })
   metadata: Record<string, any>;
 
   @DeleteDateColumn({ nullable: true })
