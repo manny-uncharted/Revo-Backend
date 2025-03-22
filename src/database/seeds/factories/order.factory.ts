@@ -40,7 +40,7 @@ export class OrderFactory extends BaseFactory<Order> {
     const totalAmount = parseFloat(this.faker.commerce.price({ min: 10, max: 500 }));
 
     const order = this.repository.create({
-      userId: this.faker.number.int({ min: 1, max: 10 }), // Assuming we have 10 users
+      // Don't set userId here - it will be provided in overrideParams
       totalAmount,
       status,
       stellarTransactionHash,

@@ -25,7 +25,7 @@ import { join } from 'path';
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({
-      type: 'better-sqlite3',
+      type: 'sqlite',
       database: join(process.cwd(), 'test-database.sqlite'),
       entities: [User, Product, Order, OrderItem],
       synchronize: true,
