@@ -1,28 +1,32 @@
 /* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { InternalServerErrorException } from '@nestjs/common';
+import { OrderService } from '../services/order.service';
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly orderService: OrderService) {}
 
   async fetchDashboardData(startDate: string, endDate: string) {
-    const salesReport = await firstValueFrom(
-      this.httpService.get<{ data: any }>(
-        `/orders/sales-report?startDate=${startDate}&endDate=${endDate}`,
-      ),
-    ).then((response: { data: any }) => response.data);
+    try {
+      const salesReport = await this.orderService.getSalesReport(
+        startDate,
+        endDate,
+      );
+      const orderMetrics = await this.orderService.getOrderMetrics(
+        startDate,
+        endDate,
+      );
 
-    const orderMetrics = await firstValueFrom(
-      this.httpService.get<{ data: any }>(
-        `/orders/order-metrics?startDate=${startDate}&endDate=${endDate}`,
-      ),
-    ).then((response: { data: any }) => response.data);
-
-    return {
-      salesReport: salesReport.data,
-      orderMetrics: orderMetrics.data,
-    };
+      return {
+        salesReport,
+        orderMetrics,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to fetch dashboard data',
+        error.message,
+      );
+    }
   }
 }

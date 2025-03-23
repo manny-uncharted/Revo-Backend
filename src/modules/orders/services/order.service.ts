@@ -16,13 +16,13 @@ import { Redis } from 'ioredis';
 
 @Injectable()
 export class OrderService {
-  productService: any;
   constructor(
     private readonly orderRepository: OrderRepository,
     @InjectRepository(OrderItem)
     private readonly orderItemRepository: Repository<OrderItem>,
 
     @InjectRedis() private readonly redis: Redis,
+    private readonly productService: any,
   ) {}
 
   async getSalesReport(startDate: string, endDate: string) {

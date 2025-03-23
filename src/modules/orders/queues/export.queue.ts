@@ -8,7 +8,14 @@ export class ExportQueue {
   constructor(private readonly exportService: ExportService) {}
 
   @Process()
+  @Process('export')
   async handleExport(job: Job) {
-    await this.exportService.exportToCSV(job.data.orders, job.data.filename);
+    try {
+      await this.exportService.exportToCSV(job.data.orders, job.data.filename);
+      return { success: true, filename: job.data.filename };
+    } catch (error) {
+      console.error(`Export job failed: ${error.message}`);
+      throw error;
+    }
   }
 }

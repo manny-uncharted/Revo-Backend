@@ -53,9 +53,6 @@ export class Order extends BaseEntity {
   @Column()
   customerId: number;
 
-  @Column('decimal')
-  amount: number;
-
   @CreateDateColumn()
   createdAt: Date;
 

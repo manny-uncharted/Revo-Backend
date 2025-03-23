@@ -12,6 +12,6 @@ export class Metrics {
   @Column('decimal')
   value: number;
 
-  @Column()
-  date: string;
+  @Column('date')
+  date: Date;
 }

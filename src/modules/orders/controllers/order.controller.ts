@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   Body,
   Controller,
@@ -10,10 +11,13 @@ import {
   Param,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { ParseDatePipe } from '../pipes/parse-date.pipe';
 import { CreateOrderDto } from '../dtos/create-order.dto';
 import { OrderService } from '../services/order.service';
 import { UpdateOrderDto } from '../dtos/update-order.dto';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 
 @Controller('orders')
 export class OrderController {
@@ -93,19 +97,43 @@ export class OrderController {
       throw new InternalServerErrorException('Failed to delete order');
     }
   }
-  @Get('sales-report')
+  @UseGuards(JwtAuthGuard)
+  @Get('/reports/sales')
   async getSalesReport(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('startDate', new ParseDatePipe()) startDate: Date,
+    @Query('endDate', new ParseDatePipe()) endDate: Date,
   ) {
-    return this.orderService.getSalesReport(startDate, endDate);
+    try {
+      return this.orderService.getSalesReport(
+        startDate.toISOString(),
+        endDate.toISOString(),
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      throw new InternalServerErrorException('Failed to generate sales report');
+    }
   }
 
-  @Get('order-metrics')
+  @Get('/reports/metrics')
+  @UseGuards(JwtAuthGuard)
   async getOrderMetrics(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('startDate', new ParseDatePipe()) startDate: Date,
+    @Query('endDate', new ParseDatePipe()) endDate: Date,
   ) {
-    return this.orderService.getOrderMetrics(startDate, endDate);
+    try {
+      return this.orderService.getOrderMetrics(
+        startDate.toISOString(),
+        endDate.toISOString(),
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      throw new InternalServerErrorException(
+        'Failed to retrieve order metrics',
+      );
+    }
   }
 }
