@@ -9,19 +9,26 @@ import { Repository } from 'typeorm';
 import { Product } from '../entities/product.entity';
 import { CreateProductDTO } from '../dtos/create-product.dto';
 import { UpdateProductDTO } from '../dtos/update-product.dto';
+import { CategoryService } from './category.service';
 
 @Injectable()
 export class ProductService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    private readonly categoryService: CategoryService,
   ) {}
 
   async create(createProductDTO: CreateProductDTO): Promise<Product> {
     try {
+      await this.categoryService.findOne(createProductDTO.categoryId);
+
       const product = this.productRepository.create(createProductDTO);
       return await this.productRepository.save(product);
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new BadRequestException('Failed to create product');
     }
   }
