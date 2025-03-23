@@ -18,17 +18,17 @@ export class Payment {
   currency: string;
 
   @Column({ default: 'pending' })
-  status: string;
+  status?: string;
 
   @Column({ nullable: true })
-  transactionId: string;
+  transactionId?: string;
 
   @Column({ nullable: true })
-  trackingId: string;
+  trackingId?: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt?: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt?: Date;
 }

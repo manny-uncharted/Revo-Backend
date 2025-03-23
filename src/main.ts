@@ -6,7 +6,16 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { LoggerService } from './modules/logging/services/logger.service';
 import { createClient } from 'redis';
-import RedisStore from 'connect-redis';
+import * as connectRedis from 'connect-redis';
+import Redis from 'ioredis';
+
+const RedisStore = connectRedis.RedisStore;
+const redisClient = new Redis();
+
+const redisStore = new RedisStore({
+  client: redisClient,
+  disableTouch: true,
+});
 
 dotenv.config();
 
@@ -30,19 +39,20 @@ async function bootstrap() {
   // Configure session middleware with the Redis-backed store
   const sessionSecret = process.env.SESSION_SECRET;
   if (!sessionSecret) {
-    throw new Error(
-      'SESSION_SECRET is not defined in your environment variables',
-    );
+    // throw new Error(
+    //   'SESSION_SECRET is not defined in your environment variables',
+    // );
   }
+  // Configure express-session
   app.use(
-    session({
+    session.default({
       store: redisStore,
-      secret: sessionSecret,
+      secret: 'your_secret_key',
       resave: false,
       saveUninitialized: false,
+      cookie: { secure: false },
     }),
   );
-
   // Set up global validation pipe and exception filter
   app.useGlobalPipes(
     new ValidationPipe({
