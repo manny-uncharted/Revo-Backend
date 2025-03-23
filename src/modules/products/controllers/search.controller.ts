@@ -19,7 +19,7 @@ export class SearchController {
 
   @Get("search")
   @CacheKey("search_products") 
-  @CacheTTL(600) 
+  @CacheTTL(600)
   async searchProducts(
     @Query(new ValidationPipe({
       transform: true, 
@@ -29,9 +29,11 @@ export class SearchController {
     })) queryParams: CombinedSearchFilterDto
   ) {
     try {
-     
       const { search, filter } = queryParams;
       
+     
+      this.logSearchAnalytics(search, filter);
+
       if (!search?.query && !filter?.category && !filter?.minPrice && !filter?.maxPrice && !filter?.brand) {
         throw new BadRequestException("At least one search or filter parameter is required.");
       }
@@ -41,5 +43,24 @@ export class SearchController {
       console.error("Error in searchProducts:", error);
       throw error;
     }
+  }
+
+ 
+  private logSearchAnalytics(search?: any, filter?: any): void {
+    const analyticsData = {
+      timestamp: new Date().toISOString(),
+      query: search?.query || null,
+      filters: filter ? {
+        category: filter.category || null,
+        price: filter.minPrice || filter.maxPrice 
+          ? { min: filter.minPrice || null, max: filter.maxPrice || null } 
+          : null,
+        brand: filter.brand || null
+      } : null,
+      
+    };
+    
+
+    console.log('SEARCH_ANALYTICS:', JSON.stringify(analyticsData));
   }
 }
