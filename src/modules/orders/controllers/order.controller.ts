@@ -9,6 +9,7 @@ import {
   NotFoundException,
   Param,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { CreateOrderDto } from '../dtos/create-order.dto';
 import { OrderService } from '../services/order.service';
@@ -91,5 +92,20 @@ export class OrderController {
       }
       throw new InternalServerErrorException('Failed to delete order');
     }
+  }
+  @Get('sales-report')
+  async getSalesReport(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.orderService.getSalesReport(startDate, endDate);
+  }
+
+  @Get('order-metrics')
+  async getOrderMetrics(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.orderService.getOrderMetrics(startDate, endDate);
   }
 }

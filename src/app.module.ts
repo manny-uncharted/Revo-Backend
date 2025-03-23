@@ -7,6 +7,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './modules/logging/interceptors/logging.interceptor';
 import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { BullModule } from '@nestjs/bullmq';
+import { Order } from './modules/orders/entities/order.entity';
 
 @Module({
   imports: [
@@ -18,9 +20,14 @@ import { OrdersModule } from './modules/orders/orders.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         ...configService.get('database'),
+        entities: [Order],
+        synchronize: true,
       }),
     }),
     LoggingModule,
+    BullModule.registerQueue({
+      name: 'exportQueue',
+    }),
   ],
   providers: [
     {
