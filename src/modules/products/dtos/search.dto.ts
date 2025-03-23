@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsInt, Min, Max, ValidateIf } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
 export class SearchDto {
@@ -12,7 +12,10 @@ export class SearchDto {
 
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => value?.toUpperCase()) 
+  @Transform(({ value }) => value?.toUpperCase())
+  @ValidateIf((o, value) => !value || ['ASC', 'DESC'].includes(value), {
+    message: 'order must be either ASC or DESC',
+  })
   order?: 'ASC' | 'DESC';
 
   @IsOptional()

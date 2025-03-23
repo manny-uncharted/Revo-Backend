@@ -10,8 +10,14 @@ export class ProductController {
   @Get('search')
   async searchProducts(
     @Query(new ValidationPipe({ transform: true })) searchDto: SearchDto,
-    @Query(new ValidationPipe({ transform: true })) filterDto: FilterDto
+    @Query(new ValidationPipe({ transform: true })) filterDto: FilterDto,
   ) {
-    return await this.searchService.searchProducts(searchDto, filterDto);
+    try {
+      return this.searchService.searchProducts(searchDto, filterDto);
+    } catch (error) {
+      console.log(error)
+      throw error;
+    }
   }
 }
+
