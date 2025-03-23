@@ -1,5 +1,5 @@
-import { IsOptional, IsString, IsNumber, Min, ValidateIf } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsString, IsNumber, Min } from "class-validator";
+import { Transform } from "class-transformer";
 
 export class FilterDto {
   @IsOptional()
@@ -7,22 +7,18 @@ export class FilterDto {
   category?: string;
 
   @IsOptional()
-  @Type(() => Number)
+  @IsString()
+  brand?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => parseFloat(value))
   @IsNumber()
   @Min(0)
   minPrice?: number;
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => parseFloat(value))
   @IsNumber()
   @Min(0)
-  @ValidateIf((o) => o.minPrice !== undefined)
-  @ValidateIf((o, value) => o.minPrice === undefined || value >= o.minPrice, {
-    message: 'maximum Price must be greater than or equal to minimum Price',
-  })
   maxPrice?: number;
-
-  @IsOptional()
-  @IsString()
-  brand?: string;
 }

@@ -1,4 +1,5 @@
-import { IsOptional, IsEnum, IsString, IsNumber, Min, Max } from "class-validator";
+import { IsOptional, IsString, IsEnum, IsNumber, Min } from "class-validator";
+import { Transform } from "class-transformer";
 
 export class SearchDto {
   @IsOptional()
@@ -10,18 +11,19 @@ export class SearchDto {
   sortBy?: string;
 
   @IsOptional()
-  @IsEnum(["ASC", "DESC"], { message: "Order must be 'ASC' or 'DESC'" })
+  @IsEnum(["ASC", "DESC"], { message: "order must be 'ASC' or 'DESC'" })
   order?: "ASC" | "DESC";
 
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
   @Min(1)
   page?: number;
 
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
   @Min(1)
-  @Max(100)
   limit?: number;
 
   @IsOptional()
