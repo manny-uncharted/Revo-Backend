@@ -18,7 +18,7 @@ export class FilterDto {
   @Min(0)
   @ValidateIf((o) => o.minPrice !== undefined)
   @ValidateIf((o, value) => o.minPrice === undefined || value >= o.minPrice, {
-    message: 'maxPrice must be greater than or equal to minPrice',
+    message: 'maximum Price must be greater than or equal to minimum Price',
   })
   maxPrice?: number;
 

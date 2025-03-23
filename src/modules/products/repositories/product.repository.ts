@@ -83,7 +83,7 @@ export class ProductRepository {
       return result;
     } catch (error) {
       console.error("Error executing product search query:", error);
-      throw new InternalServerErrorException("Failed to execute product search");
+      throw new InternalServerErrorException("Failed to execute product search...");
     }
   }
 }
