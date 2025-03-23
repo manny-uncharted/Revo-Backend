@@ -1,7 +1,6 @@
 import { Controller, Get, Query, ValidationPipe, BadRequestException } from "@nestjs/common";
 import { SearchService } from "../services/search.service";
-import { SearchDto } from "../dtos/search.dto";
-import { FilterDto } from "../dtos/filter.dto";
+import { CombinedSearchFilterDto } from "../dtos/searchFilter.dto";
 
 @Controller("products")
 export class SearchController {
@@ -9,16 +8,17 @@ export class SearchController {
 
   @Get("search")
   async searchProducts(
-    @Query(new ValidationPipe({ transform: true })) searchDto: SearchDto,
-    @Query(new ValidationPipe({ transform: true })) filterDto: FilterDto
+    @Query(new ValidationPipe({ transform: true, whitelist: true })) queryParams: CombinedSearchFilterDto
   ) {
     try {
-      // Validate that at least one search or filter parameter is provided
-      if (!searchDto.query && !filterDto.category && !filterDto.minPrice && !filterDto.maxPrice && !filterDto.brand) {
+      const { search, filter } = queryParams;
+
+      // Ensure at least one valid parameter is provided
+      if (!search?.query && !filter?.category && !filter?.minPrice && !filter?.maxPrice && !filter?.brand) {
         throw new BadRequestException("At least one search or filter parameter is required.");
       }
 
-      return this.searchService.searchProducts(searchDto, filterDto);
+      return this.searchService.searchProducts(search, filter);
     } catch (error) {
       console.error("Error in searchProducts:", error);
       throw error;
