@@ -1,5 +1,4 @@
-import { IsOptional, IsString, IsInt, Min, Max, ValidateIf } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { IsOptional, IsEnum, IsString, IsNumber, Min, Max } from "class-validator";
 
 export class SearchDto {
   @IsOptional()
@@ -11,22 +10,16 @@ export class SearchDto {
   sortBy?: string;
 
   @IsOptional()
-  @IsString()
-  @Transform(({ value }) => value?.toUpperCase())
-  @ValidateIf((o, value) => !value || ['ASC', 'DESC'].includes(value), {
-    message: 'order must be either ASC or DESC',
-  })
-  order?: 'ASC' | 'DESC';
+  @IsEnum(["ASC", "DESC"], { message: "Order must be 'ASC' or 'DESC'" })
+  order?: "ASC" | "DESC";
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   @Min(1)
   page?: number;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   @Min(1)
   @Max(100)
   limit?: number;
@@ -34,9 +27,4 @@ export class SearchDto {
   @IsOptional()
   @IsString()
   fields?: string;
-
-  constructor() {
-    this.page = this.page ?? 1;
-    this.limit = this.limit ?? 10;
-  }
 }

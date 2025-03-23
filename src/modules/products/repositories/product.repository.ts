@@ -17,27 +17,17 @@ export class ProductRepository {
   ) {}
 
   async searchProducts(searchDto: SearchDto, filterDto: FilterDto) {
-    const {
-      query,
-      sortBy,
-      order = "ASC",
-      page = 1,
-      limit = 10,
-      fields,
-    } = searchDto;
-
+    const { query, sortBy, order = "ASC", page = 1, limit = 10, fields } = searchDto;
     const { category, minPrice, maxPrice, brand } = filterDto;
 
     const cacheKey = `products:${JSON.stringify(searchDto)}:${JSON.stringify(filterDto)}`;
 
     try {
-    
       const cachedData = await this.cacheManager.get(cacheKey);
       if (cachedData) return cachedData;
 
       let queryBuilder: SelectQueryBuilder<Product> = this.productRepo.createQueryBuilder("product");
 
-     
       if (query) {
         queryBuilder.andWhere(
           "product.name ILIKE :query OR product.description ILIKE :query",
@@ -49,35 +39,36 @@ export class ProductRepository {
       if (minPrice) queryBuilder.andWhere("product.price >= :minPrice", { minPrice });
       if (maxPrice) queryBuilder.andWhere("product.price <= :maxPrice", { maxPrice });
 
-    
       const allowedSortFields = ["name", "price", "createdAt"];
       if (sortBy && allowedSortFields.includes(sortBy)) {
         queryBuilder.orderBy(`product.${sortBy}`, order === "DESC" ? "DESC" : "ASC");
       }
 
-   
       const offset = (page - 1) * limit;
       queryBuilder.skip(offset).take(limit);
 
-    
+      // Whitelist approach for field selection
+      const allowedFields = ["id", "name", "price", "category", "brand", "description", "createdAt", "updatedAt"];
       if (fields) {
         const selectedFields = fields.split(",").map((field) => `product.${field.trim()}`);
-        queryBuilder.select(selectedFields);
+        const safeSelectedFields = selectedFields.filter(field => {
+          const fieldName = field.replace("product.", "");
+          return allowedFields.includes(fieldName);
+        });
+
+        // Use default fields if no valid fields are selected
+        if (safeSelectedFields.length === 0) {
+          queryBuilder.select(["product.id", "product.name", "product.price", "product.category"]);
+        } else {
+          queryBuilder.select(safeSelectedFields);
+        }
       } else {
-        queryBuilder.select([
-          "product.id",
-          "product.name",
-          "product.price",
-          "product.category",
-        ]);
+        queryBuilder.select(["product.id", "product.name", "product.price", "product.category"]);
       }
 
-     
       const [products, total] = await queryBuilder.getManyAndCount();
-
       const result = { products, total, page, limit };
 
-  
       await this.cacheManager.set(cacheKey, result, { ttl: 600 });
 
       return result;
