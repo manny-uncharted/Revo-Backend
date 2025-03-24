@@ -62,15 +62,6 @@ export class LoginDto {
 }
 ```
 
-**Usage Example**:
-```typescript
-@Post('login')
-login(@Body() loginDto: LoginDto) {
-  // loginDto is automatically validated
-  return this.authService.login(loginDto);
-}
-```
-
 ### **2. UpdateProductDTO**
 The `UpdateProductDTO` validates the data required for updating a product.
 
@@ -108,8 +99,23 @@ export class UpdateProductDTO {
   harvestDate?: Date;
 }
 ```
+## **How Validators Are Used in the Application**
+### **1. Validation in Controllers:**
 
-### **3. Custom Validator: IsPositiveConstraint**
+DTOs with validation decorators are used in controller methods to validate incoming requests.
+
+**Usage Example**:
+```typescript
+@Post('login')
+login(@Body() loginDto: LoginDto) {
+  // loginDto is automatically validated
+  return this.authService.login(loginDto);
+}
+```
+
+
+
+### **2. Custom Validator: IsPositiveConstraint**
 The `IsPositiveConstraint` is a custom validator that ensures a value is positive.
 
 **Code Example**:
@@ -128,7 +134,7 @@ export class IsPositiveConstraint implements ValidatorConstraintInterface {
 }
 ```
 
-### **4. Global Validation Pipe**
+### **3. Global Validation Pipe**
 The `ValidationPipe` is used globally to validate all incoming requests.
 
 **Code Example**:

@@ -14,6 +14,20 @@ This document provides an overview of the schemas used in the application. The s
   - Documentation in Swagger/OpenAPI.
   - Serialization of product data in API responses.
 
+**Fields**:
+| Field          | Type     | Description                              | Constraints                |
+|-----------------|----------|------------------------------------------|----------------------------|
+| `id`           | String   | Unique identifier for the product.       | Required, UUID format      |
+| `name`         | String   | Name of the product.                     | Required                   |
+| `description`  | String   | Description of the product.              | Optional                   |
+| `price`        | Number   | Price of the product.                    | Required                   |
+| `unit`         | String   | Unit of measurement (e.g., kg, liter).   | Required                   |
+| `images`       | Array    | List of image URLs for the product.      | Optional                   |
+| `stockQuantity`| Number   | Quantity of the product in stock.        | Required                   |
+| `harvestDate`  | Date     | Date the product was harvested.          | Required                   |
+| `createdAt`    | Date     | Timestamp when the product was created.  | Auto-generated             |
+| `updatedAt`    | Date     | Timestamp when the product was last updated. | Auto-generated         |
+
 **Example Schema**:
 ```typescript
 export const ProductSchema = {
