@@ -1,3 +1,4 @@
+
 import { 
   Controller, 
   Get, 
@@ -6,15 +7,20 @@ import {
   BadRequestException, 
   UseInterceptors, 
   CacheKey, 
-  CacheTTL 
+  CacheTTL, 
+  Logger 
 } from "@nestjs/common";
 import { CacheInterceptor } from "@nestjs/cache-manager";
 import { SearchService } from "../services/search.service";
 import { CombinedSearchFilterDto } from "../dtos/searchFilter.dto";
+import { SearchDto } from "../dtos/search.dto";
+import { FilterDto } from "../dtos/filter.dto";
 
 @Controller("products")
 @UseInterceptors(CacheInterceptor)
 export class SearchController {
+  private readonly logger = new Logger(SearchController.name);
+
   constructor(private readonly searchService: SearchService) {}
 
   @Get("search")
@@ -30,8 +36,7 @@ export class SearchController {
   ) {
     try {
       const { search, filter } = queryParams;
-      
-     
+
       this.logSearchAnalytics(search, filter);
 
       if (!search?.query && !filter?.category && !filter?.minPrice && !filter?.maxPrice && !filter?.brand) {
@@ -40,27 +45,26 @@ export class SearchController {
 
       return this.searchService.searchProducts(search, filter);
     } catch (error) {
-      console.error("Error in searchProducts:", error);
+      this.logger.error("Error in searchProducts", error);
       throw error;
     }
   }
 
- 
-  private logSearchAnalytics(search?: any, filter?: any): void {
+  private logSearchAnalytics(search?: SearchDto, filter?: FilterDto): void {
     const analyticsData = {
       timestamp: new Date().toISOString(),
       query: search?.query || null,
-      filters: filter ? {
-        category: filter.category || null,
-        price: filter.minPrice || filter.maxPrice 
-          ? { min: filter.minPrice || null, max: filter.maxPrice || null } 
-          : null,
-        brand: filter.brand || null
-      } : null,
-      
+      filters: filter
+        ? {
+            category: filter.category || null,
+            price: filter.minPrice || filter.maxPrice
+              ? { min: filter.minPrice || null, max: filter.maxPrice || null }
+              : null,
+            brand: filter.brand || null,
+          }
+        : null,
     };
-    
 
-    console.log('SEARCH_ANALYTICS:', JSON.stringify(analyticsData));
+    this.logger.log(`SEARCH_ANALYTICS: ${JSON.stringify(analyticsData)}`);
   }
 }
