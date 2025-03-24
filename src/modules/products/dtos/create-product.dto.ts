@@ -16,7 +16,7 @@ export class CreateProductDTO {
   @IsOptional()
   description?: string;
 
-  @IsNumber()
+  @IsNumber() 
   price: number;
 
   @IsString()
