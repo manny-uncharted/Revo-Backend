@@ -112,4 +112,66 @@ Content-Type: application/json
 
 ---
 
-These examples help ensure developers implement secure and consistent access to the API.
+# 🛡️ Escrow API Access Examples
+
+These endpoints relate to the core escrow functionality of Revolutionary Farmers and require proper authentication.
+
+---
+
+### ✅ Accessing Escrow Details
+```http
+GET /escrow/123 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+```json
+{
+  "escrowId": 123,
+  "status": "pending",
+  "buyerId": 42,
+  "sellerId": 51,
+  "amount": 100.00,
+  "currency": "USDC"
+}
+```
+
+---
+
+### ✅ Releasing Escrow Funds
+```http
+POST /escrow/release HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: application/json
+
+{
+  "escrowId": 123
+}
+```
+```json
+{
+  "message": "Funds released successfully",
+  "transactionHash": "0xabc123..."
+}
+```
+
+---
+
+### ❌ Attempting Escrow Release Without Token
+```http
+POST /escrow/release HTTP/1.1
+Content-Type: application/json
+
+{
+  "escrowId": 123
+}
+```
+```json
+{
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "error": "Unauthorized"
+}
+```
+
+---
+
+These examples help ensure secure implementation and consistent access to the API's authentication and escrow-related endpoints.
