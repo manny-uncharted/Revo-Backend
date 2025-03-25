@@ -1,0 +1,29 @@
+// Example: Successful login response
+{
+  "user": {
+    "id": 42,
+    "username": "farmer_jane",
+    "email": "jane@example.com"
+  },
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+// Example: Authorized request header
+GET /auth/profile HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+// Example: Unauthorized (Missing Token)
+HTTP/1.1 401 Unauthorized
+{
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "error": "Unauthorized"
+}
+
+// Example: Forbidden (Invalid or Expired Token)
+HTTP/1.1 401 Unauthorized
+{
+  "statusCode": 401,
+  "message": "invalid token",
+  "error": "Unauthorized"
+}
