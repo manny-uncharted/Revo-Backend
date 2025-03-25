@@ -1,10 +1,10 @@
 # 🔐 Authentication Flow Documentation
 
-This document explains the authentication mechanism used by the **Revolutionary Farmers** API.
+This document explains the authentication mechanism used by the API of **Revo Farmers**.
 
 ## ✅ Overview
 
-The API uses **JSON Web Tokens (JWT)** for authentication. Users authenticate by sending their credentials to the `/auth/login` endpoint. If valid, the server responds with a JWT access token. This token must be included in all subsequent requests to protected routes.
+It uses **JSON Web Tokens (JWT)** for authentication. Users authenticate by sending their credentials to the `/auth/login` endpoint. If valid, the server responds with a JWT access token. This token must be included in all subsequent requests to protected routes.
 
 ---
 
@@ -51,13 +51,18 @@ Protected routes are guarded using NestJS `JwtAuthGuard`. If the token is missin
 
 ---
 
-## 📊 Diagram (Coming Soon)
+## 📊 Diagram: Authentication Flows
 
-You can add a visual representation of the login flow here:
-- `client` → `POST /auth/login` → `server validates` → `returns JWT`
-- `client` → `GET /protected` → `includes token in header` → `server authorizes`
+The following diagrams facilitates a visual look on the authentication flow in the API.
 
-> Diagram will be added as `login-flow.png` or `login-flow.svg` in this folder.
+### 🔐 Login Flow
+![JWT Login Flow](./login-flow.png)
+
+### 🔐 Authenticated Request Flow
+![Authentication Request Flow](./auth-request-flow.png)
+
+### 🔐 Logout Flow
+![JWT Logout Flow](./logout-flow.png)
 
 ---
   
