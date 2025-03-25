@@ -36,4 +36,7 @@ export class Order extends BaseEntity {
 
   @DeleteDateColumn({ nullable: true })
   deletedAt: Date;
+
+  @Column({ type: 'jsonb', default: [] })
+  statusHistory: { status: OrderStatus; timestamp: Date }[];
 }

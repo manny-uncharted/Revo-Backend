@@ -10,6 +10,8 @@ import { CreateOrderDto } from '../dtos/create-order.dto';
 import { UpdateOrderDto } from '../dtos/update-order.dto';
 import { OrderItem } from '../entities/order-item.entity';
 import { ProductService } from 'src/modules/products/services/product.service';
+import { OrderStatusUpdatedEvent } from '../events/status-update.event';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class OrderService {
@@ -18,8 +20,8 @@ export class OrderService {
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepository: Repository<OrderItem>,
-
     private readonly productService: ProductService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
@@ -56,45 +58,34 @@ export class OrderService {
     const order = this.orderRepository.create({
       ...createOrderDto,
       totalAmount: totalAmount,
-      paymentDeadline: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes later
+      paymentDeadline: new Date(Date.now() + 5 * 60 * 1000),
       items: orderItems,
+      status: OrderStatus.PENDING,
     });
 
-    return await this.orderRepository.save(order);
+    const savedOrder = await this.orderRepository.save(order);
+    this.eventEmitter.emit(
+      'order.status.updated',
+      new OrderStatusUpdatedEvent(savedOrder.id, null, OrderStatus.PENDING),
+    );
+    return savedOrder;
   }
-
   async cancel(id: string): Promise<Order> {
     const order = await this.orderRepository.findOne({ where: { id } });
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
-
+    const previousStatus = order.status;
     order.status = OrderStatus.CANCELED;
-    return await this.orderRepository.save(order);
+    const updatedOrder = await this.orderRepository.save(order);
+    this.eventEmitter.emit(
+      'order.status.updated',
+      new OrderStatusUpdatedEvent(updatedOrder.id, previousStatus, OrderStatus.CANCELED),
+    );
+    return updatedOrder;
   }
-
-  async findAll(): Promise<Order[]> {
-    try {
-      return await this.orderRepository.find({
-        relations: {
-          items: true,
-        },
-      });
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to fetch orders');
-    }
-  }
-
-  async findOne(id: string): Promise<Order> {
-    const order = await this.orderRepository.findOne({ where: { id } });
-    if (!order) {
-      throw new NotFoundException(`Order with ID ${id} not found`);
-    }
-    return order;
-  }
-
   async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
-    try {
+
       const order = await this.orderRepository.findOne({
         where: { id },
         relations: { items: true },
@@ -103,6 +94,8 @@ export class OrderService {
       if (!order) {
         throw new NotFoundException(`Order with ID ${id} not found`);
       }
+
+      const previousStatus = order.status;
 
       if (updateOrderDto.stellarPublicKey !== undefined) {
         order.stellarPublicKey = updateOrderDto.stellarPublicKey;
@@ -155,16 +148,33 @@ export class OrderService {
           0,
         );
       }
-
-      return await this.orderRepository.save(order);
+      const updatedOrder =  await this.orderRepository.save(order);
+        if (updatedOrder.status !== previousStatus) {
+            this.eventEmitter.emit(
+              'order.status.updated',
+              new OrderStatusUpdatedEvent(updatedOrder.id, previousStatus, updatedOrder.status)
+            );
+        }
+        return updatedOrder;
+  }
+   async findOne(id: string): Promise<Order> {
+    const order = await this.orderRepository.findOne({ where: { id }, relations: {items: true} });
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+    return order;
+  }
+    async findAll(): Promise<Order[]> {
+    try {
+      return await this.orderRepository.find({
+        relations: {
+          items: true,
+        },
+      });
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Failed to update order');
+      throw new InternalServerErrorException('Failed to fetch orders');
     }
   }
-
   async remove(id: string): Promise<void> {
     try {
       const order = await this.findOne(id);
