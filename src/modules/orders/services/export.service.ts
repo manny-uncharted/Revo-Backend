@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as fastcsv from 'fast-csv';
 import { Injectable, Logger } from '@nestjs/common';
 import { CacheService } from './cache.service';
+import { v4 as uuidv4 } from 'uuid'; // Import UUID for unique filename handling
 
 @Injectable()
 export class ExportService {
@@ -37,6 +38,7 @@ export class ExportService {
     if (!filename || typeof filename !== 'string') {
       throw new Error('Filename must be a non-empty string');
     }
+
     let sanitizedFilename = filename
       .trim()
       .replace(/\.{2,}/g, '')
@@ -53,7 +55,6 @@ export class ExportService {
       }
     } catch (error) {
       this.logger.warn(`Error retrieving from cache: ${error.message}`);
-      // Continue with export if cache retrieval fails
     }
 
     if (sanitizedFilename.length > 255) {
@@ -66,7 +67,8 @@ export class ExportService {
       );
     }
 
-    filename = sanitizedFilename;
+    // Append a UUID to prevent concurrency issues
+    sanitizedFilename = `${sanitizedFilename}_${uuidv4()}`;
     const exportDir =
       process.env.EXPORT_DIR || path.resolve(process.cwd(), 'exports');
     this.ensureExportDirExists(exportDir);
@@ -76,7 +78,7 @@ export class ExportService {
     const csvStream = fastcsv.format({ headers: true });
     csvStream.pipe(ws);
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const writeTimeout = setTimeout(
         () => {
           csvStream.end();
@@ -88,12 +90,17 @@ export class ExportService {
       try {
         if (Symbol.asyncIterator in Object(dataStream)) {
           (async () => {
-            for await (const chunk of dataStream as AsyncIterable<any[]>) {
-              for (const row of chunk) {
-                csvStream.write(row);
+            try {
+              for await (const chunk of dataStream as AsyncIterable<any[]>) {
+                for (const row of chunk) {
+                  csvStream.write(row);
+                }
               }
+              csvStream.end();
+            } catch (error) {
+              reject(error);
             }
-          })().catch((error) => reject(error));
+          })();
         } else {
           const stream = dataStream as NodeJS.ReadableStream;
           stream.on('data', (chunk) => {
@@ -106,10 +113,11 @@ export class ExportService {
             }
           });
           stream.on('error', (err) => reject(err));
-          await new Promise((resolveStream) => stream.on('end', resolveStream));
+          stream.on('end', () => {
+            csvStream.end();
+          });
         }
 
-        csvStream.end();
         ws.on('finish', async () => {
           clearTimeout(writeTimeout);
           try {
