@@ -13,7 +13,13 @@ export class CacheService {
   }
 
   async getCache(key: string) {
-    const data = await this.redis.get(key);
-    return data;
+    try {
+      const data = await this.redis.get(key);
+      if (!data) return null;
+      return JSON.parse(data);
+    } catch (error) {
+      console.error(`Error retrieving cache for key ${key}:`, error);
+      return null;
+    }
   }
 }

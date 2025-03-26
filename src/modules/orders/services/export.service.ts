@@ -3,11 +3,37 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as fastcsv from 'fast-csv';
 import { Injectable } from '@nestjs/common';
+import { CacheService } from './cache.service';
 
 @Injectable()
 export class ExportService {
-  async exportToCSV(data: any[], filename: string) {
-    const ws = fs.createWriteStream(path.resolve(__dirname, `${filename}.csv`));
-    fastcsv.write(data, { headers: true }).pipe(ws);
+  private readonly cacheService: CacheService;
+  private readonly CACHE_TTL = 3600; // 1 hour
+  async exportToCSV(data: any[], filename: string): Promise<string> {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      throw new Error('Data must be a non-empty array');
+    }
+
+    if (!filename || typeof filename !== 'string') {
+      throw new Error('Filename must be a non-empty string');
+    }
+
+    const exportDir =
+      process.env.EXPORT_DIR || path.resolve(process.cwd(), 'exports');
+
+    if (!fs.existsSync(exportDir)) {
+      fs.mkdirSync(exportDir, { recursive: true });
+    }
+
+    const filePath = path.resolve(exportDir, `${filename}.csv`);
+
+    const ws = fs.createWriteStream(filePath);
+
+    return new Promise((resolve, reject) => {
+      ws.on('finish', () => resolve(filePath));
+      ws.on('error', (error) => reject(error));
+
+      fastcsv.write(data, { headers: true }).pipe(ws);
+    });
   }
 }

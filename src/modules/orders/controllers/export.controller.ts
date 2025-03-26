@@ -1,30 +1,45 @@
 /* eslint-disable prettier/prettier */
-import { Controller, Get } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { OrderService } from '../services/order.service';
 
 @Controller('orders/export')
 export class ExportController {
+  private readonly logger = new Logger(ExportController.name);
+
   constructor(
     @InjectQueue('exportQueue') private readonly exportQueue: Queue,
+    private readonly orderService: OrderService,
   ) {}
 
   @Get()
   async exportOrders() {
-    const orders = [
-      { id: 1, customerName: 'John Doe', amount: 100 },
-      { id: 2, customerName: 'Jane Smith', amount: 200 },
-    ];
-
-    await this.exportQueue.add(
-      'export-job',
-      { orders, filename: `sales-report-${Date.now()}` },
-      {
-        priority: 1,
-        attempts: 3,
-      },
-    );
-
-    return { message: 'Export is being processed in the background.' };
+    try {
+      const orders = await this.orderService.findAll();
+      await this.exportQueue.add(
+        'export-job',
+        { orders, filename: `sales-report-${Date.now()}` },
+        {
+          priority: 1,
+          attempts: 3,
+        },
+      );
+      this.logger.log(`Export job queued with ${orders.length} orders`);
+      return { message: 'Export is being processed in the background.' };
+    } catch (error) {
+      this.logger.error(
+        `Failed to queue export job: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Failed to process export request',
+      );
+    }
   }
 }

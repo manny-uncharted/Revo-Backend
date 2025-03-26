@@ -1,16 +1,12 @@
 /* eslint-disable prettier/prettier */
-import { EntityRepository, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { Order } from '../entities/order.entity';
 
-@EntityRepository(Order)
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
 export class OrderRepository extends Repository<Order> {
-  createQueryBuilder: any;
-  create: any;
-  save: any;
-  findOne: any;
-  find: any;
-  softDelete: any;
   async getSalesReport(
     startDate: string,
     endDate: string,

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -21,10 +22,20 @@ import { Order } from './modules/orders/entities/order.entity';
       useFactory: (configService: ConfigService) => ({
         ...configService.get('database'),
         entities: [Order],
-        synchronize: true,
+        synchronize: process.env.NODE_ENV !== 'production',
       }),
     }),
     LoggingModule,
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('REDIS_HOST', 'localhost'),
+          port: configService.get('REDIS_PORT', 6379),
+        },
+      }),
+      inject: [ConfigService],
+    }),
     BullModule.registerQueue({
       name: 'exportQueue',
     }),
