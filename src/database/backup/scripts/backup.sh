@@ -4,9 +4,9 @@
 # Usage: ./backup.sh [label]
 
 # Load environment variables
-if [ -f .env ]; then
-  export "$(grep -v '^#' .env | xargs)"
-fi
+set -a
+[ -f .env ] && . .env
+set +a
 
 # Default values
 DB_HOST=${POSTGRES_HOST:-localhost}
