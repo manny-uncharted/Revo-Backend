@@ -7,60 +7,77 @@ import { CacheService } from './cache.service';
 
 @Injectable()
 export class ExportService {
+  ensureExportDirExists: any;
   constructor(private readonly cacheService: CacheService) {}
   private readonly CACHE_TTL = 3600; // 1 hour
   private readonly logger = new Logger(ExportService.name);
-  async exportToCSV(data: any[], filename: string): Promise<string> {
-    const cacheKey = `export:${filename}`;
-    let cachedFilePath;
-    try {
-      cachedFilePath = await this.cacheService.getCache(cacheKey);
-    } catch (error) {
-      this.logger.warn(`Error retrieving from cache: ${error.message}`);
-      cachedFilePath = null;
-    }
-    if (cachedFilePath && fs.existsSync(cachedFilePath)) {
-      return cachedFilePath;
-    }
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      throw new Error('Data must be a non-empty array');
-    }
-    if (!filename || typeof filename !== 'string') {
-      throw new Error('Filename must be a non-empty string');
-    }
+  async streamExportToCSV(
+    dataStream: AsyncIterable<any[]> | NodeJS.ReadableStream,
+    filename: string,
+  ): Promise<string> {
     const sanitizedFilename = filename.replace(/[^a-zA-Z0-9_-]/g, '_');
-    if (sanitizedFilename !== filename) {
-      this.logger.warn(
-        `Filename sanitized from ${filename} to ${sanitizedFilename}`,
-      );
-    }
-    filename = sanitizedFilename;
+
     const exportDir =
       process.env.EXPORT_DIR || path.resolve(process.cwd(), 'exports');
-    if (!fs.existsSync(exportDir)) {
-      try {
-        fs.mkdirSync(exportDir, { recursive: true });
-      } catch (error) {
-        this.logger.error(
-          `Failed to create export directory: ${error.message}`,
-        );
-        throw new Error(`Failed to create export directory: ${error.message}`);
-      }
-    }
-    const filePath = path.resolve(exportDir, `${filename}.csv`);
+    this.ensureExportDirExists(exportDir);
+
+    const filePath = path.resolve(exportDir, `${sanitizedFilename}.csv`);
     const ws = fs.createWriteStream(filePath);
-    return new Promise((resolve, reject) => {
-      ws.on('finish', async () => {
-        try {
-          await this.cacheService.setCache(cacheKey, filePath, this.CACHE_TTL);
-        } catch (error) {
-          this.logger.warn(`Error saving to cache: ${error.message}`);
-          // Continue despite cache error
+
+    const csvStream = fastcsv.format({ headers: true });
+    csvStream.pipe(ws);
+
+    return new Promise(async (resolve, reject) => {
+      const writeTimeout = setTimeout(
+        () => {
+          csvStream.end();
+          reject(new Error('CSV export operation timed out'));
+        },
+        30 * 60 * 1000,
+      );
+
+      try {
+        if (Symbol.asyncIterator in dataStream) {
+          for await (const chunk of dataStream as AsyncIterable<any[]>) {
+            for (const row of chunk) {
+              csvStream.write(row);
+            }
+          }
+        } else {
+          const stream = dataStream as NodeJS.ReadableStream;
+          stream.on('data', (chunk) => {
+            for (const row of chunk) {
+              csvStream.write(row);
+            }
+          });
+
+          await new Promise((resolveStream) => {
+            stream.on('end', resolveStream);
+            stream.on('error', (err) => reject(err));
+          });
         }
-        resolve(filePath);
-      });
-      ws.on('error', (error) => reject(error));
-      fastcsv.write(data, { headers: true }).pipe(ws);
+
+        csvStream.end();
+        clearTimeout(writeTimeout);
+
+        ws.on('finish', async () => {
+          clearTimeout(writeTimeout);
+          try {
+            await this.cacheService.setCache(
+              `export:${sanitizedFilename}`,
+              filePath,
+              this.CACHE_TTL,
+            );
+          } catch (error) {
+            this.logger.warn(`Error saving to cache: ${error.message}`);
+          }
+          resolve(filePath);
+        });
+      } catch (error) {
+        clearTimeout(writeTimeout);
+        csvStream.end();
+        reject(error);
+      }
     });
   }
 }
