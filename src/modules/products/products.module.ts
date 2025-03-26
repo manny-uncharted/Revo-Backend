@@ -5,7 +5,7 @@ import { ProductController } from './controllers/product.controller';
 import { ProductService } from './services/product.service';
 import { MediaController } from './controllers/ media.controller';
 import { MediaService } from './services/media.service';
-import { ProductImage } from './entities/product-image.entity';
+import { ProductImage } from './entities/media.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Product, ProductImage])],

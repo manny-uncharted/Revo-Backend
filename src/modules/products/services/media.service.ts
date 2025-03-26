@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { S3, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
-import { ProductImage } from '../entities/product-image.entity';
+import { ProductImage } from '../entities/media.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MediaResponseDTO } from '../dtos/media.dto';
@@ -32,7 +32,7 @@ export class MediaService {
 
   async Upload_Media(file: Express.Multer.File): Promise<MediaResponseDTO> {
     try {
-      // Validate file input
+      // Validate file input OKKK!!
       if (!file || !file.path || !file.originalname) {
         throw new BadRequestException('Invalid_file_input');
       }
@@ -95,12 +95,57 @@ export class MediaService {
         expiresIn: 3600,
       });
 
-      // Clean and shorten the signed URL
-      const cleanedUrl = this.URL_Cleaner(signedUrl);
-      return cleanedUrl;
+      return signedUrl;
     } catch (error) {
       throw new BadRequestException(
         `failed_to_generate_secure_URL: ${error.message}`,
+      );
+    }
+  }
+
+  async Delete_Media_Files(media_id: number): Promise<void> {
+    try {
+      const fileRecord = await this.ProductImageRepo.findOne({
+        where: { media_id },
+      });
+
+      if (!fileRecord) {
+        throw new BadRequestException('File_not_found');
+      }
+
+      await this.S3_client.send(
+        new DeleteObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Key: fileRecord.media_key,
+        }),
+      );
+
+      await this.ProductImageRepo.delete(media_id);
+    } catch (error) {
+      throw new BadRequestException(`Failed_to_delete_file: ${error.message}`);
+    }
+  }
+
+  async Get_Public_Url(media_id: number): Promise<string> {
+    try {
+      if (!media_id) {
+        throw new BadRequestException('media_id_is_required');
+      }
+
+      const fileRecord = await this.ProductImageRepo.findOne({
+        where: { media_id },
+      });
+
+      if (!fileRecord) {
+        throw new BadRequestException('File_not_found');
+      }
+      const cleanedUrl = this.URL_Cleaner(
+        `${process.env.CDN_BASE_URL}/${fileRecord.media_key}`,
+      );
+      return cleanedUrl;
+    } catch (error) {
+      throw new BadRequestException(
+        `failed_to_generate_public_URL: ${error.message}`,
       );
     }
   }
