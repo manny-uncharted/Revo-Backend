@@ -11,7 +11,7 @@ export class ExportService {
   private readonly CACHE_TTL = 3600; // 1 hour
   async exportToCSV(data: any[], filename: string): Promise<string> {
     const cacheKey = `export:${filename}`;
-    const cachedFilePath = await this.cacheService.get(cacheKey);
+    const cachedFilePath = await this.cacheService.getCache(cacheKey);
 
     if (cachedFilePath && fs.existsSync(cachedFilePath)) {
       return cachedFilePath;
@@ -43,7 +43,7 @@ export class ExportService {
 
     return new Promise((resolve, reject) => {
       ws.on('finish', async () => {
-        await this.cacheService.set(cacheKey, filePath, this.CACHE_TTL);
+        await this.cacheService.setCache(cacheKey, filePath, this.CACHE_TTL);
         resolve(filePath);
       });
       ws.on('error', (error) => reject(error));

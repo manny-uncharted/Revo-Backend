@@ -32,16 +32,6 @@ import { Order } from './modules/orders/entities/order.entity';
         connection: {
           host: configService.get('REDIS_HOST', 'localhost'),
           port: configService.get('REDIS_PORT', 6379),
-        },
-      }),
-      inject: [ConfigService],
-    }),
-    BullModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        connection: {
-          host: configService.get('REDIS_HOST', 'localhost'),
-          port: configService.get('REDIS_PORT', 6379),
           password: configService.get('REDIS_PASSWORD', undefined),
           tls: configService.get('REDIS_TLS_ENABLED', false)
             ? {
@@ -54,6 +44,9 @@ import { Order } from './modules/orders/entities/order.entity';
         },
       }),
       inject: [ConfigService],
+    }),
+    BullModule.registerQueue({
+      name: 'exportQueue',
     }),
   ],
   providers: [
