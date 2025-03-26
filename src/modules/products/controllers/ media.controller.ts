@@ -20,9 +20,9 @@ export class MediaController {
     return await this.mediaService.Upload_Media(file);
   }
 
-  @Get('secure-url/:file_id')
-  async getSecureFileUrl(@Param('file_id') file_id: number) {
-    const url = await this.mediaService.generateSignedUrl(file_id);
+  @Get('secure-url/:media_id')
+  async getSecureFileUrl(@Param('media_id') media_id: number) {
+    const url = await this.mediaService.Generate_Signed_Url(media_id);
     return { secure_url: url };
   }
 }

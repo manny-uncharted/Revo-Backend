@@ -62,7 +62,6 @@ export class MediaService {
       );
 
       // delete  local file after upload OKK !
-
       await unlink(file.path);
 
       return savedMedia;
@@ -73,10 +72,10 @@ export class MediaService {
     }
   }
 
-  async generateSignedUrl(file_id: number): Promise<string> {
+  async Generate_Signed_Url(file_id: number): Promise<string> {
     try {
       if (!file_id) {
-        throw new BadRequestException('file_id is required');
+        throw new BadRequestException('media_id_is_required');
       }
 
       const fileRecord = await this.ProductImageRepo.findOne({
@@ -95,10 +94,13 @@ export class MediaService {
       const signedUrl = await getSignedUrl(this.S3_client, command, {
         expiresIn: 3600,
       });
-      return signedUrl;
+
+      // Clean and shorten the signed URL
+      const cleanedUrl = this.URL_Cleaner(signedUrl);
+      return cleanedUrl;
     } catch (error) {
       throw new BadRequestException(
-        `Failed to generate secure URL: ${error.message}`,
+        `failed_to_generate_secure_URL: ${error.message}`,
       );
     }
   }
@@ -137,6 +139,16 @@ export class MediaService {
       });
     } catch (e) {
       throw new BadRequestException('Error_uploading_file_to_AWS', e);
+    }
+  }
+
+  private URL_Cleaner(url: string): string {
+    try {
+      const url_Obj = new URL(url);
+      const cleaned_url = `${url_Obj.origin}${url_Obj.pathname}`;
+      return cleaned_url;
+    } catch (err) {
+      throw new BadRequestException('Failed_to_clean_url_OKK!!', err);
     }
   }
 }
