@@ -7,6 +7,7 @@ import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { LoggerService } from './modules/logging/services/logger.service';
 import { createClient } from 'redis';
 import RedisStore from 'connect-redis';
+import { setupSwagger } from './docs/config/swagger.config';
 
 dotenv.config();
 
@@ -57,10 +58,16 @@ async function bootstrap() {
   app.useLogger(logger);
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  // Set up Swagger documentation
+  setupSwagger(app);
+
   await app.listen(process.env.PORT ?? 3000);
 
   logger.info(
     `Application is running on: http://localhost:${process.env.PORT}`,
+  );
+  logger.info(
+    `API Documentation is available at: http://localhost:${process.env.PORT}/api/docs`,
   );
 }
 
