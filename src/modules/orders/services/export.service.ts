@@ -7,23 +7,46 @@ import { CacheService } from './cache.service';
 
 @Injectable()
 export class ExportService {
-  ensureExportDirExists: any;
-  constructor(private readonly cacheService: CacheService) {}
   private readonly CACHE_TTL = 3600; // 1 hour
   private readonly logger = new Logger(ExportService.name);
+
+  constructor(private readonly cacheService: CacheService) {}
+
+  private ensureExportDirExists(exportDir: string): void {
+    if (!fs.existsSync(exportDir)) {
+      fs.mkdirSync(exportDir, { recursive: true });
+      this.logger.log(`Export directory created at: ${exportDir}`);
+    }
+  }
+
   async streamExportToCSV(
     dataStream: AsyncIterable<any[]> | NodeJS.ReadableStream,
     filename: string,
   ): Promise<string> {
-    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9_-]/g, '_');
+    let sanitizedFilename = filename
+      .trim()
+      .replace(/\.\.{2,}/g, '')
+      .replace(/[^a-zA-Z0-9_.-]/g, '_')
+      .replace(/^\./, '_');
 
+    // Ensure the filename has a reasonable length
+    if (sanitizedFilename.length > 255) {
+      sanitizedFilename = sanitizedFilename.substring(0, 255);
+      this.logger.warn(`Filename truncated to 255 characters`);
+    }
+    if (sanitizedFilename !== filename) {
+      this.logger.warn(
+        `Filename sanitized from ${filename} to ${sanitizedFilename}`,
+      );
+    }
+
+    filename = sanitizedFilename;
     const exportDir =
       process.env.EXPORT_DIR || path.resolve(process.cwd(), 'exports');
     this.ensureExportDirExists(exportDir);
 
     const filePath = path.resolve(exportDir, `${sanitizedFilename}.csv`);
     const ws = fs.createWriteStream(filePath);
-
     const csvStream = fastcsv.format({ headers: true });
     csvStream.pipe(ws);
 
@@ -37,7 +60,7 @@ export class ExportService {
       );
 
       try {
-        if (Symbol.asyncIterator in dataStream) {
+        if (Symbol.asyncIterator in Object(dataStream)) {
           for await (const chunk of dataStream as AsyncIterable<any[]>) {
             for (const row of chunk) {
               csvStream.write(row);
@@ -46,20 +69,13 @@ export class ExportService {
         } else {
           const stream = dataStream as NodeJS.ReadableStream;
           stream.on('data', (chunk) => {
-            for (const row of chunk) {
-              csvStream.write(row);
-            }
+            csvStream.write(chunk);
           });
-
-          await new Promise((resolveStream) => {
-            stream.on('end', resolveStream);
-            stream.on('error', (err) => reject(err));
-          });
+          stream.on('error', (err) => reject(err));
+          await new Promise((resolveStream) => stream.on('end', resolveStream));
         }
 
         csvStream.end();
-        clearTimeout(writeTimeout);
-
         ws.on('finish', async () => {
           clearTimeout(writeTimeout);
           try {
@@ -73,9 +89,12 @@ export class ExportService {
           }
           resolve(filePath);
         });
+        ws.on('error', (error) => {
+          clearTimeout(writeTimeout);
+          reject(error);
+        });
       } catch (error) {
         clearTimeout(writeTimeout);
-        csvStream.end();
         reject(error);
       }
     });
