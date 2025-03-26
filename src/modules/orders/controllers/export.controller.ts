@@ -4,10 +4,12 @@ import {
   Get,
   Logger,
   InternalServerErrorException,
+  UseGuards,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { OrderService } from '../services/order.service';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 
 @Controller('orders/export')
 export class ExportController {
@@ -18,6 +20,7 @@ export class ExportController {
     private readonly orderService: OrderService,
   ) {}
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   async exportOrders() {
     try {

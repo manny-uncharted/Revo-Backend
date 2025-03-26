@@ -36,8 +36,24 @@ import { Order } from './modules/orders/entities/order.entity';
       }),
       inject: [ConfigService],
     }),
-    BullModule.registerQueue({
-      name: 'exportQueue',
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('REDIS_HOST', 'localhost'),
+          port: configService.get('REDIS_PORT', 6379),
+          password: configService.get('REDIS_PASSWORD', undefined),
+          tls: configService.get('REDIS_TLS_ENABLED', false)
+            ? {
+                rejectUnauthorized: configService.get(
+                  'REDIS_REJECT_UNAUTHORIZED',
+                  true,
+                ),
+              }
+            : undefined,
+        },
+      }),
+      inject: [ConfigService],
     }),
   ],
   providers: [

@@ -6,6 +6,8 @@ import Redis from 'ioredis';
 @Injectable()
 export class CacheService {
   redisService: any;
+  set: any;
+  get: any;
   constructor(@InjectRedis() private readonly redis: Redis) {}
 
   async setCache(key: string, value: any, ttl: number = 3600) {
