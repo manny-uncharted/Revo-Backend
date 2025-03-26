@@ -5,7 +5,7 @@
 
 # Load environment variables
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
+  export "$(grep -v '^#' .env | xargs)"
 fi
 
 # Default values
@@ -16,6 +16,12 @@ DB_NAME=${POSTGRES_DB:-mydatabase}
 BACKUP_DIR=${BACKUP_DIR:-./backups}
 COMPRESSION=${BACKUP_COMPRESSION_LEVEL:-9}
 PREFIX=${BACKUP_PREFIX:-revo-db-backup}
+
+# Check if password is defined
+if [ -z "$POSTGRES_PASSWORD" ]; then
+  echo "Error: POSTGRES_PASSWORD environment variable is not set"
+  exit 1
+fi
 
 # Create label from argument or default to empty
 LABEL=""

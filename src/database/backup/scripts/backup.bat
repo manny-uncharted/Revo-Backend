@@ -12,10 +12,10 @@ if exist .env (
 )
 
 REM Default values
-if not defined POSTGRES_HOST set DB_HOST=localhost
-if not defined POSTGRES_PORT set DB_PORT=5432
-if not defined POSTGRES_USER set DB_USER=myuser
-if not defined POSTGRES_DB set DB_NAME=mydatabase
+if not defined POSTGRES_HOST set POSTGRES_HOST=localhost
+if not defined POSTGRES_PORT set POSTGRES_PORT=5432
+if not defined POSTGRES_USER set POSTGRES_USER=myuser
+if not defined POSTGRES_DB set POSTGRES_DB=mydatabase
 if not defined BACKUP_DIR set BACKUP_DIR=.\backups
 if not defined BACKUP_COMPRESSION_LEVEL set COMPRESSION=9
 if not defined BACKUP_PREFIX set PREFIX=revo-db-backup
@@ -37,9 +37,15 @@ set "BACKUP_PATH=%BACKUP_DIR%\%FILENAME%"
 
 echo Starting database backup to %BACKUP_PATH%
 
+REM Check if password is defined
+if not defined POSTGRES_PASSWORD (
+  echo Error: POSTGRES_PASSWORD environment variable is not set
+  exit /b 1
+)
+
 REM Perform the backup
 set PGPASSWORD=%POSTGRES_PASSWORD%
-pg_dump -h %DB_HOST% -p %DB_PORT% -U %DB_USER% -d %DB_NAME% | gzip -%COMPRESSION% > "%BACKUP_PATH%"
+pg_dump -h %POSTGRES_HOST% -p %POSTGRES_PORT% -U %POSTGRES_USER% -d %POSTGRES_DB% | gzip -%COMPRESSION% > "%BACKUP_PATH%"
 
 REM Check if backup was successful
 if %ERRORLEVEL% equ 0 (

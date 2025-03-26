@@ -20,7 +20,7 @@ fi
 
 # Load environment variables
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
+  export "$(grep -v '^#' .env | xargs)"
 fi
 
 # Default values
@@ -28,6 +28,12 @@ DB_HOST=${POSTGRES_HOST:-localhost}
 DB_PORT=${POSTGRES_PORT:-5432}
 DB_USER=${POSTGRES_USER:-myuser}
 DB_NAME=${POSTGRES_DB:-mydatabase}
+
+# Check if password is defined
+if [ -z "$POSTGRES_PASSWORD" ]; then
+  echo "Error: POSTGRES_PASSWORD environment variable is not set"
+  exit 1
+fi
 
 echo "Starting database restoration from $BACKUP_FILE"
 echo "WARNING: This will overwrite the current database. Press Ctrl+C to cancel."

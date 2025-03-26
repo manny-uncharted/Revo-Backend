@@ -51,6 +51,10 @@ if /i not "%CONFIRM%"=="y" (
 echo Starting database restoration from %BACKUP_FILE%
 
 REM Perform the restoration
+if not defined POSTGRES_PASSWORD (
+  echo Error: POSTGRES_PASSWORD environment variable is not set
+  exit /b 1
+)
 set PGPASSWORD=%POSTGRES_PASSWORD%
 gzip -cd "%BACKUP_FILE%" | psql -h %POSTGRES_HOST% -p %POSTGRES_PORT% -U %POSTGRES_USER% -d %POSTGRES_DB%
 
