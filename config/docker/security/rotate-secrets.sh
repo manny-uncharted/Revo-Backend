@@ -14,36 +14,48 @@ generate_random_string() {
     openssl rand -base64 $((length * 3/4)) | tr -d '/+=' | head -c $length
 }
 
+# Function to save secret without newline
+save_secret() {
+    local file="$1"
+    local content="$2"
+    echo -n "$content" > "$file"
+}
+
 # Function to rotate database password
 rotate_db_password() {
     local new_password=$(generate_random_string 32)
-    echo "$new_password" > "$SECRETS_DIR/db_password.txt"
+    save_secret "$SECRETS_DIR/db_password.txt" "$new_password"
     
-    # Update Vault
-    curl -X POST \
-        -H "X-Vault-Token: $VAULT_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d "{\"value\": \"$new_password\"}" \
-        "$VAULT_ADDR/v1/secret/database/password"
+    # Update Vault if available
+    if [ -n "$VAULT_TOKEN" ] && [ -n "$VAULT_ADDR" ]; then
+        curl -s -X POST \
+            -H "X-Vault-Token: $VAULT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"value\": \"$new_password\"}" \
+            "$VAULT_ADDR/v1/secret/database/password" || true
+    fi
 }
 
 # Function to rotate JWT secret
 rotate_jwt_secret() {
     local new_secret=$(generate_random_string 64)
-    echo "$new_secret" > "$SECRETS_DIR/jwt_secret.txt"
+    save_secret "$SECRETS_DIR/jwt_secret.txt" "$new_secret"
     
-    # Update Vault
-    curl -X POST \
-        -H "X-Vault-Token: $VAULT_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d "{\"value\": \"$new_secret\"}" \
-        "$VAULT_ADDR/v1/secret/jwt/secret"
+    # Update Vault if available
+    if [ -n "$VAULT_TOKEN" ] && [ -n "$VAULT_ADDR" ]; then
+        curl -s -X POST \
+            -H "X-Vault-Token: $VAULT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"value\": \"$new_secret\"}" \
+            "$VAULT_ADDR/v1/secret/jwt/secret" || true
+    fi
 }
 
 # Function to rotate SSL certificates
 rotate_ssl_certificates() {
     # Generate new private key
     openssl genrsa -out "$SECRETS_DIR/ssl_key.pem" 4096
+    chmod 600 "$SECRETS_DIR/ssl_key.pem"
     
     # Generate new certificate
     openssl req -x509 -new -nodes \
@@ -52,25 +64,29 @@ rotate_ssl_certificates() {
         -out "$SECRETS_DIR/ssl_cert.pem" \
         -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
     
-    # Update Vault
-    curl -X POST \
-        -H "X-Vault-Token: $VAULT_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d @- "$VAULT_ADDR/v1/secret/ssl/cert" << EOF
+    # Update Vault if available
+    if [ -n "$VAULT_TOKEN" ] && [ -n "$VAULT_ADDR" ]; then
+        curl -s -X POST \
+            -H "X-Vault-Token: $VAULT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d @- "$VAULT_ADDR/v1/secret/ssl/cert" << EOF
 {
     "key": "$(cat $SECRETS_DIR/ssl_key.pem | base64)",
     "cert": "$(cat $SECRETS_DIR/ssl_cert.pem | base64)"
 }
-EOF
+EOF || true
+    fi
 }
 
 # Function to rotate Vault token
 rotate_vault_token() {
     local new_token=$(generate_random_string 64)
-    echo "$new_token" > "$SECRETS_DIR/vault_token.txt"
+    save_secret "$SECRETS_DIR/vault_token.txt" "$new_token"
     
     # Update environment variables
-    sed -i "s/VAULT_TOKEN=.*/VAULT_TOKEN=$new_token/" ./env/*/.env
+    if [ -d "./env" ]; then
+        find ./env -type f -name ".env" -exec sed -i "s/VAULT_TOKEN=.*/VAULT_TOKEN=$new_token/" {} +
+    fi
 }
 
 # Main rotation function
@@ -79,6 +95,7 @@ rotate_secrets() {
     
     # Create secrets directory if it doesn't exist
     mkdir -p "$SECRETS_DIR"
+    chmod 700 "$SECRETS_DIR"
     
     # Rotate all secrets
     rotate_db_password

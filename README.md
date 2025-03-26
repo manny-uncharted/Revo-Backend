@@ -35,7 +35,7 @@ This project implements a secure environment and configuration management system
    npm install
    ```
 
-3. Generate initial secrets:
+3. Set up secrets:
 
    ```bash
    # On Windows
@@ -45,6 +45,8 @@ This project implements a secure environment and configuration management system
    chmod +x config/docker/security/rotate-secrets.sh
    ./config/docker/security/rotate-secrets.sh
    ```
+
+   Note: The secrets directory is gitignored. Template files are provided in `config/docker/secrets/` for reference.
 
 4. Start the application:
 
@@ -58,7 +60,11 @@ This project implements a secure environment and configuration management system
 
 ### Security Features
 
-- **Secret Management**: Credentials are stored securely using Docker secrets and Vault
+- **Secret Management**:
+  - Credentials are stored securely using Docker secrets
+  - HashiCorp Vault integration for centralized secret management
+  - Automatic secret rotation
+  - No secrets committed to version control
 - **Environment Config**: Different configs for development and production
 - **Credential Rotation**: Automatic rotation of credentials
 - **TLS/SSL**: Secure communication with SSL/TLS
@@ -68,12 +74,28 @@ This project implements a secure environment and configuration management system
 
 ```
 config/docker/
-├── secrets/           # Docker secrets storage
+├── secrets/           # Docker secrets storage (gitignored)
 ├── env/              # Environment-specific configurations
 │   ├── dev/         # Development environment
 │   └── prod/        # Production environment
 └── security/        # Security configurations and scripts
 ```
+
+### Secret Management
+
+The project uses a multi-layered approach to secret management:
+
+1. **Local Development**:
+
+   - Secrets are stored in `config/docker/secrets/` (gitignored)
+   - Template files are provided for reference
+   - Secrets are generated using secure random values
+
+2. **Production**:
+   - Secrets are managed through Docker secrets
+   - HashiCorp Vault integration for centralized management
+   - Automatic rotation of credentials
+   - No secrets stored in version control
 
 ### Credential Rotation
 
@@ -105,6 +127,42 @@ For local development without Docker:
    ```bash
    npm run start:dev
    ```
+
+## Security Best Practices
+
+1. **Secret Management**:
+
+   - Never commit secrets to version control
+   - Use Docker secrets for runtime secrets
+   - Implement secret rotation
+   - Use Vault for centralized secret management
+
+2. **Access Control**:
+
+   - Implement least privilege principle
+   - Use strong authentication
+   - Enable rate limiting
+   - Configure proper CORS policies
+
+3. **SSL/TLS**:
+
+   - Use strong cipher suites
+   - Enable certificate rotation
+   - Implement certificate validation
+   - Use secure protocols
+
+4. **Container Security**:
+
+   - Run containers with minimal privileges
+   - Use read-only root filesystem
+   - Implement security options
+   - Regular security updates
+
+5. **Monitoring and Auditing**:
+   - Enable comprehensive logging
+   - Implement audit trails
+   - Monitor security events
+   - Regular security assessments
 
 ## Documentation
 
