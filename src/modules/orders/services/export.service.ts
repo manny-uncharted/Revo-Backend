@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as fastcsv from 'fast-csv';
 import { Injectable, Logger } from '@nestjs/common';
 import { CacheService } from './cache.service';
-import { v4 as uuidv4 } from 'uuid'; // Import UUID for unique filename handling
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ExportService {
@@ -44,19 +44,6 @@ export class ExportService {
       .replace(/\.{2,}/g, '')
       .replace(/[^a-zA-Z0-9_.-]/g, '_')
       .replace(/^\./, '_');
-
-    // Check cache first
-    const cacheKey = `export:${sanitizedFilename}`;
-    try {
-      const cachedFilePath = await this.cacheService.getCache(cacheKey);
-      if (cachedFilePath && fs.existsSync(cachedFilePath)) {
-        this.logger.log(`Using cached export file: ${cachedFilePath}`);
-        return cachedFilePath;
-      }
-    } catch (error) {
-      this.logger.warn(`Error retrieving from cache: ${error.message}`);
-    }
-
     if (sanitizedFilename.length > 255) {
       sanitizedFilename = sanitizedFilename.substring(0, 255);
       this.logger.warn(`Filename truncated to 255 characters`);
@@ -67,18 +54,27 @@ export class ExportService {
       );
     }
 
-    // Append a UUID to prevent concurrency issues
     sanitizedFilename = `${sanitizedFilename}_${uuidv4()}`;
-    const exportDir =
-      process.env.EXPORT_DIR || path.resolve(process.cwd(), 'exports');
+
+    const cacheKey = `export:${sanitizedFilename}`;
+    try {
+      const cachedFilePath = await this.cacheService.getCache(cacheKey);
+      if (cachedFilePath && fs.existsSync(cachedFilePath)) {
+        this.logger.log(`Using cached export file: ${cachedFilePath}`);
+        return cachedFilePath;
+      }
+    } catch (error) {
+      this.logger.warn(`Error retrieving from cache: ${error.message}`);
+    }
+    const exportDir = path.resolve(__dirname, '../../exports');
     this.ensureExportDirExists(exportDir);
-
-    const filePath = path.resolve(exportDir, `${sanitizedFilename}.csv`);
-    const ws = fs.createWriteStream(filePath);
-    const csvStream = fastcsv.format({ headers: true });
-    csvStream.pipe(ws);
-
     return new Promise((resolve, reject) => {
+      const filePath = path.join(exportDir, sanitizedFilename + '.csv');
+      const ws = fs.createWriteStream(filePath);
+      const csvStream = fastcsv.format({ headers: true });
+
+      csvStream.pipe(ws);
+
       const writeTimeout = setTimeout(
         () => {
           csvStream.end();
