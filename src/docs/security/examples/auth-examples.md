@@ -112,7 +112,7 @@ Content-Type: application/json
 
 ---
 
-# 🛡️ Escrow API Access Examples
+## 🛡️ Escrow API Access Examples
 
 These endpoints relate to the core escrow functionality of Revolutionary Farmers and require proper authentication.
 
