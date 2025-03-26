@@ -103,7 +103,7 @@ To rotate credentials manually:
 
 ```bash
 # On Windows
-powershell -ExecutionPolicy Bypass -File rotate-secrets.ps1
+ powershell -ExecutionPolicy Bypass -File config/docker/security/rotate-secrets.ps1
 
 # On Linux/MacOS
 ./config/docker/security/rotate-secrets.sh

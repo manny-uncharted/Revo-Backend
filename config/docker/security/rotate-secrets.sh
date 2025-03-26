@@ -66,15 +66,25 @@ rotate_ssl_certificates() {
     
     # Update Vault if available
     if [ -n "$VAULT_TOKEN" ] && [ -n "$VAULT_ADDR" ]; then
+ # Create temporary file for JSON payload
++       tmp_json=$(mktemp)
+        key_b64=$(base64 -w 0 < "$SECRETS_DIR/ssl_key.pem")
+        cert_b64=$(base64 -w 0 < "$SECRETS_DIR/ssl_cert.pem")
+        
+        cat > "$tmp_json" << EOF
+{
+    "key": "$key_b64",
+    "cert": "$cert_b64"
+}
+EOF
+        
         curl -s -X POST \
             -H "X-Vault-Token: $VAULT_TOKEN" \
             -H "Content-Type: application/json" \
-            -d @- "$VAULT_ADDR/v1/secret/ssl/cert" << EOF
-{
-    "key": "$(cat $SECRETS_DIR/ssl_key.pem | base64)",
-    "cert": "$(cat $SECRETS_DIR/ssl_cert.pem | base64)"
-}
-EOF || true
+            -d @"$tmp_json" \
+            "$VAULT_ADDR/v1/secret/ssl/cert"
+            
+        rm "$tmp_json"
     fi
 }
 
@@ -85,7 +95,7 @@ rotate_vault_token() {
     
     # Update environment variables
     if [ -d "./env" ]; then
-        find ./env -type f -name ".env" -exec sed -i "s/VAULT_TOKEN=.*/VAULT_TOKEN=$new_token/" {} +
+        find ./env -type f -name ".env" -exec sed -i "s/VAULT_TOKEN=.*/VAULT_TOKEN=$new_token/" {} 
     fi
 }
 
