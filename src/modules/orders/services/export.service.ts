@@ -9,10 +9,16 @@ import { CacheService } from './cache.service';
 export class ExportService {
   private readonly cacheService: CacheService;
   private readonly CACHE_TTL = 3600; // 1 hour
+  logger: any;
   async exportToCSV(data: any[], filename: string): Promise<string> {
     const cacheKey = `export:${filename}`;
-    const cachedFilePath = await this.cacheService.getCache(cacheKey);
-
+    let cachedFilePath;
+    try {
+      cachedFilePath = await this.cacheService.getCache(cacheKey);
+    } catch (error) {
+      this.logger.warn(`Error retrieving from cache: ${error.message}`);
+      cachedFilePath = null;
+    }
     if (cachedFilePath && fs.existsSync(cachedFilePath)) {
       return cachedFilePath;
     }
@@ -22,7 +28,6 @@ export class ExportService {
     if (!filename || typeof filename !== 'string') {
       throw new Error('Filename must be a non-empty string');
     }
-
     const sanitizedFilename = filename.replace(/[^a-zA-Z0-9_-]/g, '_');
     if (sanitizedFilename !== filename) {
       console.warn(
@@ -32,22 +37,22 @@ export class ExportService {
     filename = sanitizedFilename;
     const exportDir =
       process.env.EXPORT_DIR || path.resolve(process.cwd(), 'exports');
-
     if (!fs.existsSync(exportDir)) {
       fs.mkdirSync(exportDir, { recursive: true });
     }
-
     const filePath = path.resolve(exportDir, `${filename}.csv`);
-
     const ws = fs.createWriteStream(filePath);
-
     return new Promise((resolve, reject) => {
       ws.on('finish', async () => {
-        await this.cacheService.setCache(cacheKey, filePath, this.CACHE_TTL);
+        try {
+          await this.cacheService.setCache(cacheKey, filePath, this.CACHE_TTL);
+        } catch (error) {
+          this.logger.warn(`Error saving to cache: ${error.message}`);
+          // Continue despite cache error
+        }
         resolve(filePath);
       });
       ws.on('error', (error) => reject(error));
-
       fastcsv.write(data, { headers: true }).pipe(ws);
     });
   }
