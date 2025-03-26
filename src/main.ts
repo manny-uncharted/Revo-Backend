@@ -1,12 +1,13 @@
+/* eslint-disable prettier/prettier */
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as session from 'express-session';
+import session from 'express-session';
 import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { LoggerService } from './modules/logging/services/logger.service';
 import { createClient } from 'redis';
-import RedisStore from 'connect-redis';
+import { RedisStore } from 'connect-redis';
 
 dotenv.config();
 
@@ -24,8 +25,11 @@ async function bootstrap() {
   redisClient.on('error', (err) => console.error('Redis Client Error', err));
   await redisClient.connect().catch(console.error);
 
-  // Initialize the RedisStore using the ESM import syntax
-  const redisStore = new RedisStore({ client: redisClient });
+  // Create the Redis store directly with the RedisStore class
+  const redisStore = new RedisStore({
+    client: redisClient,
+    prefix: 'revo-session:',
+  });
 
   // Configure session middleware with the Redis-backed store
   const sessionSecret = process.env.SESSION_SECRET;
@@ -34,6 +38,7 @@ async function bootstrap() {
       'SESSION_SECRET is not defined in your environment variables',
     );
   }
+
   app.use(
     session({
       store: redisStore,

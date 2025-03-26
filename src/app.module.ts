@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,6 +8,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './modules/logging/interceptors/logging.interceptor';
 import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { BackupModule } from './database/backup/backup.module';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { OrdersModule } from './modules/orders/orders.module';
       }),
     }),
     LoggingModule,
+    BackupModule,
   ],
   providers: [
     {
