@@ -10,6 +10,14 @@ import {
 } from 'typeorm';
 import { OrderItem } from './order-item.entity';
 
+export interface ProductSnapshot {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
 export enum OrderStatus {
   PENDING = 'pending',
   COMPLETED = 'completed',
@@ -57,7 +65,7 @@ export class Order extends BaseEntity {
   createdAt: Date;
 
   @Column('jsonb')
-  productSnapshot: any;
+  productSnapshot: ProductSnapshot;
 
   @ManyToOne(() => Order, (order) => order.items)
   order: Order;

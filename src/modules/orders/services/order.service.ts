@@ -13,6 +13,11 @@ import { UpdateOrderDto } from '../dtos/update-order.dto';
 import { OrderItem } from '../entities/order-item.entity';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
+import { ProductService } from 'src/modules/products/services/product.service';
+interface OrderMetrics {
+  totalSales: string;
+  totalOrders: string;
+}
 
 @Injectable()
 export class OrderService {
@@ -22,19 +27,26 @@ export class OrderService {
     private readonly orderItemRepository: Repository<OrderItem>,
 
     @InjectRedis() private readonly redis: Redis,
-    private readonly productService: any,
+    private readonly productService: ProductService,
   ) {}
 
   async getSalesReport(startDate: string, endDate: string) {
     const cacheKey = `salesReport:${startDate}:${endDate}`;
-    const cachedData = await this.redis.get(cacheKey);
-
+    let cachedData: string | null;
+    try {
+      cachedData = await this.redis.get(cacheKey);
+    } catch (error) {
+      console.error('Redis error:', error);
+    }
     if (cachedData) {
       return JSON.parse(cachedData);
     }
-
     const data = await this.orderRepository.getSalesReport(startDate, endDate);
-    await this.redis.set(cacheKey, JSON.stringify(data), 'EX', 3600); // Cache for 1 hour
+    try {
+      await this.redis.set(cacheKey, JSON.stringify(data), 'EX', 3600);
+    } catch (error) {
+      console.error('Redis error:', error);
+    }
     return data;
   }
 
@@ -200,17 +212,24 @@ export class OrderService {
     }
   }
 
-  async getOrderMetrics(startDate: string, endDate: string): Promise<any> {
-    const query = this.orderRepository
-      .createQueryBuilder('order')
-      .select('SUM(order.totalAmount)', 'totalSales')
-      .addSelect('COUNT(order.id)', 'totalOrders')
-      .where('order.createdAt BETWEEN :startDate AND :endDate', {
-        startDate,
-        endDate,
-      })
-      .getRawOne();
-
-    return query;
+  async getOrderMetrics(
+    startDate: string,
+    endDate: string,
+  ): Promise<OrderMetrics> {
+    try {
+      const query = this.orderRepository
+        .createQueryBuilder('order')
+        .select('SUM(order.totalAmount)', 'totalSales')
+        .addSelect('COUNT(order.id)', 'totalOrders')
+        .where('order.createdAt BETWEEN :startDate AND :endDate', {
+          startDate,
+          endDate,
+        })
+        .getRawOne();
+      return query;
+    } catch (error) {
+      console.error('Error getting order metrics:', error);
+      throw new InternalServerErrorException('Failed to fetch order metrics');
+    }
   }
 }
