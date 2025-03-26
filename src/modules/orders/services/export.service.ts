@@ -38,7 +38,14 @@ export class ExportService {
     const exportDir =
       process.env.EXPORT_DIR || path.resolve(process.cwd(), 'exports');
     if (!fs.existsSync(exportDir)) {
-      fs.mkdirSync(exportDir, { recursive: true });
+      try {
+        fs.mkdirSync(exportDir, { recursive: true });
+      } catch (error) {
+        this.logger.error(
+          `Failed to create export directory: ${error.message}`,
+        );
+        throw new Error(`Failed to create export directory: ${error.message}`);
+      }
     }
     const filePath = path.resolve(exportDir, `${filename}.csv`);
     const ws = fs.createWriteStream(filePath);
