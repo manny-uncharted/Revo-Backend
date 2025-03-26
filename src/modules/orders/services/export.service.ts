@@ -14,8 +14,15 @@ export class ExportService {
 
   private ensureExportDirExists(exportDir: string): void {
     if (!fs.existsSync(exportDir)) {
-      fs.mkdirSync(exportDir, { recursive: true });
-      this.logger.log(`Export directory created at: ${exportDir}`);
+      try {
+        fs.mkdirSync(exportDir, { recursive: true });
+        this.logger.log(`Export directory created at: ${exportDir}`);
+      } catch (error) {
+        this.logger.error(
+          `Failed to create export directory: ${error.message}`,
+        );
+        throw new Error(`Failed to create export directory: ${error.message}`);
+      }
     }
   }
 
@@ -23,13 +30,32 @@ export class ExportService {
     dataStream: AsyncIterable<any[]> | NodeJS.ReadableStream,
     filename: string,
   ): Promise<string> {
+    if (!dataStream) {
+      throw new Error('Data stream is required');
+    }
+
+    if (!filename || typeof filename !== 'string') {
+      throw new Error('Filename must be a non-empty string');
+    }
     let sanitizedFilename = filename
       .trim()
-      .replace(/\.\.{2,}/g, '')
+      .replace(/\.{2,}/g, '')
       .replace(/[^a-zA-Z0-9_.-]/g, '_')
       .replace(/^\./, '_');
 
-    // Ensure the filename has a reasonable length
+    // Check cache first
+    const cacheKey = `export:${sanitizedFilename}`;
+    try {
+      const cachedFilePath = await this.cacheService.getCache(cacheKey);
+      if (cachedFilePath && fs.existsSync(cachedFilePath)) {
+        this.logger.log(`Using cached export file: ${cachedFilePath}`);
+        return cachedFilePath;
+      }
+    } catch (error) {
+      this.logger.warn(`Error retrieving from cache: ${error.message}`);
+      // Continue with export if cache retrieval fails
+    }
+
     if (sanitizedFilename.length > 255) {
       sanitizedFilename = sanitizedFilename.substring(0, 255);
       this.logger.warn(`Filename truncated to 255 characters`);
@@ -61,15 +87,23 @@ export class ExportService {
 
       try {
         if (Symbol.asyncIterator in Object(dataStream)) {
-          for await (const chunk of dataStream as AsyncIterable<any[]>) {
-            for (const row of chunk) {
-              csvStream.write(row);
+          (async () => {
+            for await (const chunk of dataStream as AsyncIterable<any[]>) {
+              for (const row of chunk) {
+                csvStream.write(row);
+              }
             }
-          }
+          })().catch((error) => reject(error));
         } else {
           const stream = dataStream as NodeJS.ReadableStream;
           stream.on('data', (chunk) => {
-            csvStream.write(chunk);
+            if (Array.isArray(chunk)) {
+              for (const row of chunk) {
+                csvStream.write(row);
+              }
+            } else {
+              csvStream.write(chunk);
+            }
           });
           stream.on('error', (err) => reject(err));
           await new Promise((resolveStream) => stream.on('end', resolveStream));
