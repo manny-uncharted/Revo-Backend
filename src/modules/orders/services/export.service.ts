@@ -2,14 +2,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as fastcsv from 'fast-csv';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CacheService } from './cache.service';
 
 @Injectable()
 export class ExportService {
   constructor(private readonly cacheService: CacheService) {}
   private readonly CACHE_TTL = 3600; // 1 hour
-  logger: any;
+  private readonly logger = new Logger(ExportService.name);
   async exportToCSV(data: any[], filename: string): Promise<string> {
     const cacheKey = `export:${filename}`;
     let cachedFilePath;
