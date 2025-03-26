@@ -7,7 +7,7 @@ import { CacheService } from './cache.service';
 
 @Injectable()
 export class ExportService {
-  private readonly cacheService: CacheService;
+  constructor(private readonly cacheService: CacheService) {}
   private readonly CACHE_TTL = 3600; // 1 hour
   logger: any;
   async exportToCSV(data: any[], filename: string): Promise<string> {
