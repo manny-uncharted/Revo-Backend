@@ -30,7 +30,7 @@ export class ExportService {
     }
     const sanitizedFilename = filename.replace(/[^a-zA-Z0-9_-]/g, '_');
     if (sanitizedFilename !== filename) {
-      console.warn(
+      this.logger.warn(
         `Filename sanitized from ${filename} to ${sanitizedFilename}`,
       );
     }
