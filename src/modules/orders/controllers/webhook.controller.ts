@@ -22,7 +22,12 @@ export class WebhookController {
 
       return res.status(200).send({ received: true });
     } catch (error) {
-      return res.status(500).send({ error: 'Failed to process webhook' });
+      console.error('Failed to process webhook:', error);
+
+    return res.status(500).send({ 
+    error: 'Failed to process webhook', 
+    message: process.env.NODE_ENV === 'production' ? undefined : error.message 
+    });
     }
   }
 }

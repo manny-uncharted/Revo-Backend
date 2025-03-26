@@ -3,6 +3,6 @@ export function orderStatusSMSTemplate(phoneNumber: string, orderId: string, sta
   const safeStatus = status || 'processing';
   return {
     to: phoneNumber,
-    message: `📦 Your order #${orderId} has been updated to: ${status}. Thanks for shopping with us!`,
+    message: `📦 Your order #${safeOrderId} has been updated to: ${safeStatus}. Thanks for shopping with us!`,
   };
 }
