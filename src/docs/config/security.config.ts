@@ -9,7 +9,10 @@ export const getThrottlerConfig = (configService: ConfigService): ThrottlerModul
 };
 
 export const jwtConstants = {
-  secret: process.env.JWT_SECRET || 'default_jwt_secret',
+  secret: process.env.JWT_SECRET || (() => {
+    console.error('WARNING: JWT_SECRET not set! Using a random secret that will change on restart.');
+    return require('crypto').randomBytes(32).toString('hex');
+  })(),
   expiresIn: process.env.ACCESS_TOKEN_EXPIRATION || '3600s', // 1 hour
 };
 
