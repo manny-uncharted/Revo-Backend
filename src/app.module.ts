@@ -7,7 +7,6 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './modules/logging/interceptors/logging.interceptor';
 import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
-import {
 import { BullModule } from '@nestjs/bull';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -51,7 +50,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     },
     ProductsModule,
     OrdersModule,
-    NotificationServicesTs,
+    
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
