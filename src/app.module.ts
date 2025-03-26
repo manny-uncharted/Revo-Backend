@@ -7,6 +7,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './modules/logging/interceptors/logging.interceptor';
 import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service'; // Import AppService
 
 @Module({
   imports: [
@@ -21,14 +23,16 @@ import { OrdersModule } from './modules/orders/orders.module';
       }),
     }),
     LoggingModule,
+    ProductsModule,
+    OrdersModule,
   ],
+  controllers: [AppController],
   providers: [
+    AppService, // <-- Add AppService here
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
-    ProductsModule,
-    OrdersModule,
   ],
 })
 export class AppModule {}
