@@ -10,24 +10,57 @@ It uses **JSON Web Tokens (JWT)** for authentication. Users authenticate by send
 
 ## 📥 Login Flow
 
-1. **User submits credentials** to the `POST /auth/login` endpoint.
-2. **Backend validates credentials** via `authService.login()`.
-3. If valid, the backend **signs a JWT** containing user ID and username.
-4. The server returns:
-   ```json
-   {
-     "user": {
-       "id": 1,
-       "username": "john_doe",
-       ...
-     },
-     "accessToken": "<JWT_TOKEN>"
-   }
-   ```
-5. The client must store this token securely and include it in the `Authorization` header:
-   ```http
-   Authorization: Bearer <JWT_TOKEN>
-   ```
+### 🔐 Request
+
+**Endpoint:**
+```http
+POST /auth/login
+```
+
+**Request Headers:**
+```http
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "username": "john_doe",
+  "password": "securePassword123"
+}
+```
+
+---
+
+### 🔐 Backend Processing
+1. Backend receives credentials and passes them to `authService.login()`
+2. If credentials are valid, the backend signs a JWT containing `sub` (user ID) and `username`
+3. JWT is returned along with user info
+
+---
+
+### 🔐 Successful Response
+```json
+{
+  "user": {
+    "id": 1,
+    "username": "john_doe"
+  },
+  "accessToken": "<JWT_TOKEN>"
+}
+```
+
+### 🔐 Error Response (Invalid Credentials)
+```http
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+
+{
+  "statusCode": 401,
+  "message": "Invalid username or password",
+  "error": "Unauthorized"
+}
+```
 
 ---
 
