@@ -104,7 +104,7 @@ rotate_vault_token() {
     
     # Update environment variables
     if [ -d "./env" ]; then
-        find ./env -type f -name ".env" -exec sed -i "s/VAULT_TOKEN=.*/VAULT_TOKEN=$new_token/" {} 
+        find ./env -type f -name ".env" -exec sed -i "s/VAULT_TOKEN=.*/VAULT_TOKEN=$new_token/" {} \;
     fi
 }
 
