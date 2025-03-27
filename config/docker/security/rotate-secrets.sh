@@ -53,12 +53,20 @@ rotate_jwt_secret() {
     
     # Update Vault if available
     if [ -n "$VAULT_TOKEN" ] && [ -n "$VAULT_ADDR" ]; then
-        curl -s -X POST \
-            -H "X-Vault-Token: $VAULT_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"value\": \"$new_secret\"}" \
-            "$VAULT_ADDR/v1/secret/jwt/secret" || true
-    fi
+        # Send request to Vault and check for successful response
+         response=$(curl -s -w "\n%{http_code}" -X POST \
+             -H "X-Vault-Token: $VAULT_TOKEN" \
+             -H "Content-Type: application/json" \
+             -d "{\"value\": \"$new_secret\"}" \
+             "$VAULT_ADDR/v1/secret/jwt/secret")
+         
+         status_code=$(echo "$response" | tail -n1)
+         response_body=$(echo "$response" | sed '$d')
+        
+         if [ "$status_code" -ne 200 ] && [ "$status_code" -ne 204 ]; then
+             echo "Error updating Vault with JWT secret: $response_body"
+             return 1
+         fi
 }
 
 # Function to rotate SSL certificates
@@ -96,16 +104,16 @@ EOF
            "$VAULT_ADDR/v1/secret/ssl/cert"
            
        rm "$tmp_json"
-
-# Function to rotate Vault token
-rotate_vault_token() {
-    local new_token=$(generate_random_string 64)
-    save_secret "$SECRETS_DIR/vault_token.txt" "$new_token"
-    
-    # Update environment variables
-    if [ -d "./env" ]; then
-        find ./env -type f -name ".env" -exec sed -i "s/VAULT_TOKEN=.*/VAULT_TOKEN=$new_token/" {} \;
-    fi
+}
+#+# Function to rotate Vault token
+ rotate_vault_token() {
+     local new_token=$(generate_random_string 64)
+     save_secret "$SECRETS_DIR/vault_token.txt" "$new_token"
+     
+     # Update environment variables
+     if [ -d "./env" ]; then
+         find ./env -type f -name ".env" -exec sed -i "s/VAULT_TOKEN=.*/VAULT_TOKEN=$new_token/" {} \;
+     fi
 }
 
 # Main rotation function
