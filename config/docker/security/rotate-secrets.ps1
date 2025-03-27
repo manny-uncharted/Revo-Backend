@@ -448,9 +448,20 @@ function Rotate-JwtSecret {
 function Rotate-SslCertificates {
     try {
         Write-Host "Rotating SSL certificates..."
+        
         # Generate new private key
-        $key = New-Object System.Security.Cryptography.RSACryptoServiceProvider(4096)
-        $key.ExportCspBlob($true) | Set-Content "$SECRETS_DIR\ssl_key.pem" -Force
+        # Use OpenSSL to generate proper PEM format key if available
++        if ($opensslAvailable) {
++            & openssl genrsa -out "$SECRETS_DIR\ssl_key.pem" 4096
++        } else {
++            # Fallback to .NET, but export in proper PEM format
++            $key = New-Object System.Security.Cryptography.RSACryptoServiceProvider(4096)
++            $privateKeyBytes = $key.ExportRSAPrivateKey()
++            $pem = "-----BEGIN PRIVATE KEY-----`r`n"
++            $pem += [Convert]::ToBase64String($privateKeyBytes, [System.Base64FormattingOptions]::InsertLineBreaks)
++            $pem += "`r`n-----END PRIVATE KEY-----"
++            Set-Content -Path "$SECRETS_DIR\ssl_key.pem" -Value $pem -Force
++        }
         
         # Generate new certificate
         $cert = New-SelfSignedCertificate -DnsName "localhost" `
@@ -461,7 +472,21 @@ function Rotate-SslCertificates {
             -NotAfter (Get-Date).AddDays(365)
         
         # Export certificate
-        $cert | Export-Certificate -FilePath "$SECRETS_DIR\ssl_cert.pem" -Force
+         # Export certificate in PEM format
++        if ($opensslAvailable) {
++            $tempCertPath = Join-Path $env:TEMP "temp_cert.cer"
++            $cert | Export-Certificate -FilePath $tempCertPath -Type CERT -Force
++            & openssl x509 -inform DER -in $tempCertPath -out "$SECRETS_DIR\ssl_cert.pem" 
++            Remove-Item -Path $tempCertPath -Force
++        } else {
++            $tempCertPath = Join-Path $env:TEMP "temp_cert.cer"
++            $cert | Export-Certificate -FilePath $tempCertPath -Type CERT -Force
++            $certBytes = Get-Content -Path $tempCertPath -Encoding Byte
++            $certBase64 = [Convert]::ToBase64String($certBytes, [System.Base64FormattingOptions]::InsertLineBreaks)
++            $pemCert = "-----BEGIN CERTIFICATE-----`r`n$certBase64`r`n-----END CERTIFICATE-----"
++            Set-Content -Path "$SECRETS_DIR\ssl_cert.pem" -Value $pemCert -Force
++            Remove-Item -Path $tempCertPath -Force
++        }
         
         # Update Vault
         $keyContent = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content "$SECRETS_DIR\ssl_key.pem" -Raw)))
@@ -512,6 +537,15 @@ function Rotate-DbPassword {
         Write-Host "Rotating database password..."
         $newPassword = Generate-RandomString 32
         Set-Content -Path "$SECRETS_DIR\db_password.txt" -Value $newPassword -Force
+                
+# Function to save secret without newline
+function Save-Secret {
+    param (
+        [string]$Path,
+        [string]$Content
+    )
+    [System.IO.File]::WriteAllText($Path, $Content)
+}
         
         # Update Vault
         $body = @{
