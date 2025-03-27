@@ -18,6 +18,14 @@ if (-not (Test-Path $SECRETS_DIR)) {
 
 # Function to generate random string
 
+function Save-Secret {
+    param (
+        [string]$Path,
+        [string]$Content
+    )
+    [System.IO.File]::WriteAllText($Path, $Content)
+}
+
 function Generate-RandomString {
     param (
         [Parameter(Mandatory = $true)]
@@ -46,8 +54,8 @@ function Generate-RandomString {
             "Alphanumeric" {
                 $chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
                 $result = ""
-                for ($i = 0; $i -lt $Length; $i) {
-                    $result = $chars[$bytes[$i] % $chars.Length]
+                 for ($i = 0; $i -lt $Length; $i++) {
+                     $result += $chars[$bytes[$i] % $chars.Length]
                 }
                 $result
             }
@@ -69,7 +77,6 @@ function Generate-RandomString {
     }
 }
 
-# Generate initial secrets without Vault (we'll add Vault later)
 # Generate initial secrets without Vault (we'll add Vault later)
 try {
     Write-Host "Generating initial secrets..."
@@ -127,95 +134,6 @@ catch {
 } 
 
 # Check if OpenSSL is available
-$opensslAvailable = $null -ne (Get-Command "openssl" -ErrorAction SilentlyContinue)
-
-if ($opensslAvailable) {
-    # Use OpenSSL for proper PEM format
-    $certPath = Join-Path $SECRETS_DIR "ssl_cert.pem"
-    $keyPath = Join-Path $SECRETS_DIR "ssl_key.pem"
-    $csrPath = Join-Path $SECRETS_DIR "ssl_request.csr"
-    $configPath = Join-Path $SECRETS_DIR "openssl.cnf"
-   
-   # Create OpenSSL config
-    $opensslConfig = @"
-[req]
-default_bits = 4096
-default_md = sha256
-distinguished_name = req_distinguished_name
-req_extensions = v3_req
-prompt = no
-
-[req_distinguished_name]
-CN = localhost
-
-[v3_req]
-keyUsage = critical, digitalSignature, keyAgreement
-extendedKeyUsage = serverAuth
-subjectAltName = @alt_names
-
-[alt_names]
-DNS.1 = localhost
-"@
-   
-    Set-Content -Path $configPath -Value $opensslConfig
-    
-    # Generate private key and certificate
-    & openssl genrsa -out $keyPath 4096
-    & openssl req -new -key $keyPath -out $csrPath -config $configPath
-    & openssl x509 -req -days 365 -in $csrPath -signkey $keyPath -out $certPath -extensions v3_req -extfile $configPath
-    
-    # Clean up temporary files
-    Remove-Item -Path $csrPath -Force
-    Remove-Item -Path $configPath -Force
-} else {
-    # Fallback to .NET methods but with proper export
-    $cert = New-SelfSignedCertificate -DnsName "localhost" `
-       -CertStoreLocation "cert:\CurrentUser\My" `
-        -KeyLength 4096 `
-        -KeyAlgorithm RSA `
-        -HashAlgorithm SHA256 `
-        -NotAfter (Get-Date).AddDays(365)
-   
-   $certPath = Join-Path $SECRETS_DIR "ssl_cert.pem"
-   $keyPath = Join-Path $SECRETS_DIR "ssl_key.pem"
-   $pfxPath = Join-Path $SECRETS_DIR "temp.pfx"
-   
-    # Generate a secure password for PFX export
-   $pfxPassword = Generate-RandomString -Length 32
-   $securePfxPassword = ConvertTo-SecureString -String $pfxPassword -Force -AsPlainText
-    
-   # Export to PFX with password
-   Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $securePfxPassword -Force | Out-Null
-   
-   # Use certutil to convert to PEM format (available on Windows by default)
-   & certutil -exportPFX -p $pfxPassword $pfxPath $certPath PEM | Out-Null
-   
-   # Clean up
-  Remove-Item -Path $pfxPath -Force
-  
-   # Clean up certificate from store
-   Remove-Item -Path "cert:\CurrentUser\My\$($cert.Thumbprint)" -Force
-}
-
-Write-Host "Generated SSL certificate and key"
-    # Vault token (for future use)
-    $vaultToken = Generate-RandomString 64
-    $vaultTokenPath = Join-Path $SECRETS_DIR "vault_token.txt"
-    Save-Secret -Path $vaultTokenPath -Content $vaultToken
-    Write-Host "Generated Vault token"
-
-    Write-Host "Secret generation completed successfully!"
-
-    # List generated files
-    Write-Host "`nGenerated files:"
-    Get-ChildItem $SECRETS_DIR | ForEach-Object {
-        Write-Host "- $($_.Name)"
-    }
-}
-catch {
-    Write-Error "Secret generation failed: $_"
-    exit 1
-}
 
 # Generate initial secrets without Vault (we'll add Vault later)
 try {
@@ -307,113 +225,7 @@ DNS.1 = localhost
 Write-Host "Generated SSL certificate and key"
 
     # Vault token (for future use)
-    $vaultToken = Generate-RandomString 64
-    $vaultTokenPath = Join-Path $SECRETS_DIR "vault_token.txt"
-    Set-Content -Path $vaultTokenPath -Value $vaultToken -Force
-    Write-Host "Generated Vault token"
-
-    Write-Host "Secret generation completed successfully!"
-
-    # List generated files
-    Write-Host "`nGenerated files:"
-    Get-ChildItem $SECRETS_DIR | ForEach-Object {
-        Write-Host "- $($_.Name)"
-    }
-}
-catch {
-    Write-Error "Secret generation failed: $_"
-    exit 1
-} 
-
-
-
-# Check if OpenSSL is available
-$opensslAvailable = $null -ne (Get-Command "openssl" -ErrorAction SilentlyContinue)
-
-if ($opensslAvailable) {
-    # Use OpenSSL for proper PEM format
-    $certPath = Join-Path $SECRETS_DIR "ssl_cert.pem"
-    $keyPath = Join-Path $SECRETS_DIR "ssl_key.pem"
-    $csrPath = Join-Path $SECRETS_DIR "ssl_request.csr"
-    $configPath = Join-Path $SECRETS_DIR "openssl.cnf"
-    
- # Create OpenSSL config
- $opensslConfig = @"
-[req]
-default_bits = 4096
-default_md = sha256
-distinguished_name = req_distinguished_name
-req_extensions = v3_req
-prompt = no
-
-[req_distinguished_name]
-CN = localhost
-
-[v3_req]
-keyUsage = critical, digitalSignature, keyAgreement
-extendedKeyUsage = serverAuth
-subjectAltName = @alt_names
-
-[alt_names]
-DNS.1 = localhost
-"@
-    
-    Set-Content -Path $configPath -Value $opensslConfig
-    
-    # Generate private key and certificate
-    & openssl genrsa -out $keyPath 4096
-    & openssl req -new -key $keyPath -out $csrPath -config $configPath
-    & openssl x509 -req -days 365 -in $csrPath -signkey $keyPath -out $certPath -extensions v3_req -extfile $configPath
-    
-    # Clean up temporary files
-    Remove-Item -Path $csrPath -Force
-    Remove-Item -Path $configPath -Force
-} else {
-    # Fallback to .NET methods but with proper export
-    $cert = New-SelfSignedCertificate -DnsName "localhost" `
-        -CertStoreLocation "cert:\CurrentUser\My" `
-        -KeyLength 4096 `
-        -KeyAlgorithm RSA `
-        -HashAlgorithm SHA256 `
-        -NotAfter (Get-Date).AddDays(365)
-    
-    $certPath = Join-Path $SECRETS_DIR "ssl_cert.pem"
-    $keyPath = Join-Path $SECRETS_DIR "ssl_key.pem"
-    $pfxPath = Join-Path $SECRETS_DIR "temp.pfx"
-    
-    # Generate a secure password for PFX export
-    $pfxPassword = Generate-RandomString -Length 32
-    $securePfxPassword = ConvertTo-SecureString -String $pfxPassword -Force -AsPlainText
-    
-    # Export to PFX with password
-    Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $securePfxPassword -Force | Out-Null
-    
-    # Use certutil to convert to PEM format (available on Windows by default)
-    & certutil -exportPFX -p $pfxPassword $pfxPath $certPath PEM | Out-Null
-    
-    # Clean up
-    Remove-Item -Path $pfxPath -Force
-    
-    # Clean up certificate from store
-    Remove-Item -Path "cert:\CurrentUser\My\$($cert.Thumbprint)" -Force
-}
-
-Write-Host "Generated SSL certificate and key"
-
-    # Vault token (for future use)
-    $vaultToken = Generate-RandomString 64
-    $vaultTokenPath = Join-Path $SECRETS_DIR "vault_token.txt"
-    Set-Content -Path $vaultTokenPath -Value $vaultToken -Force
-    Write-Host "Generated Vault token"
-
-    Write-Host "Secret generation completed successfully!"
-
-    # List generated files
-    Write-Host "`nGenerated files:"
-    Get-ChildItem $SECRETS_DIR | ForEach-Object {
-        Write-Host "- $($_.Name)"
-    }
-}
+  
 catch {
     Write-Error "Secret generation failed: $_"
     exit 1
@@ -448,20 +260,20 @@ function Rotate-JwtSecret {
 function Rotate-SslCertificates {
     try {
         Write-Host "Rotating SSL certificates..."
-        
+
         # Generate new private key
         # Use OpenSSL to generate proper PEM format key if available
-+        if ($opensslAvailable) {
-+            & openssl genrsa -out "$SECRETS_DIR\ssl_key.pem" 4096
-+        } else {
-+            # Fallback to .NET, but export in proper PEM format
-+            $key = New-Object System.Security.Cryptography.RSACryptoServiceProvider(4096)
-+            $privateKeyBytes = $key.ExportRSAPrivateKey()
-+            $pem = "-----BEGIN PRIVATE KEY-----`r`n"
-+            $pem += [Convert]::ToBase64String($privateKeyBytes, [System.Base64FormattingOptions]::InsertLineBreaks)
-+            $pem += "`r`n-----END PRIVATE KEY-----"
-+            Set-Content -Path "$SECRETS_DIR\ssl_key.pem" -Value $pem -Force
-+        }
+         if ($opensslAvailable) {
+           & openssl genrsa -out "$SECRETS_DIR\ssl_key.pem" 4096
+         } else {
+            # Fallback to .NET, but export in proper PEM format
+             $key = New-Object System.Security.Cryptography.RSACryptoServiceProvider(4096)
+             $privateKeyBytes = $key.ExportRSAPrivateKey()
+             $pem = "-----BEGIN PRIVATE KEY-----`r`n"
+             $pem += [Convert]::ToBase64String($privateKeyBytes, [System.Base64FormattingOptions]::InsertLineBreaks)
+             $pem += "`r`n-----END PRIVATE KEY-----"
+             Set-Content -Path "$SECRETS_DIR\ssl_key.pem" -Value $pem -Force
+         }
         
         # Generate new certificate
         $cert = New-SelfSignedCertificate -DnsName "localhost" `
@@ -473,20 +285,20 @@ function Rotate-SslCertificates {
         
         # Export certificate
          # Export certificate in PEM format
-+        if ($opensslAvailable) {
-+            $tempCertPath = Join-Path $env:TEMP "temp_cert.cer"
-+            $cert | Export-Certificate -FilePath $tempCertPath -Type CERT -Force
-+            & openssl x509 -inform DER -in $tempCertPath -out "$SECRETS_DIR\ssl_cert.pem" 
-+            Remove-Item -Path $tempCertPath -Force
-+        } else {
-+            $tempCertPath = Join-Path $env:TEMP "temp_cert.cer"
-+            $cert | Export-Certificate -FilePath $tempCertPath -Type CERT -Force
-+            $certBytes = Get-Content -Path $tempCertPath -Encoding Byte
-+            $certBase64 = [Convert]::ToBase64String($certBytes, [System.Base64FormattingOptions]::InsertLineBreaks)
-+            $pemCert = "-----BEGIN CERTIFICATE-----`r`n$certBase64`r`n-----END CERTIFICATE-----"
-+            Set-Content -Path "$SECRETS_DIR\ssl_cert.pem" -Value $pemCert -Force
-+            Remove-Item -Path $tempCertPath -Force
-+        }
+         if ($opensslAvailable) {
+             $tempCertPath = Join-Path $env:TEMP "temp_cert.cer"
+             $cert | Export-Certificate -FilePath $tempCertPath -Type CERT -Force
+             & openssl x509 -inform DER -in $tempCertPath -out "$SECRETS_DIR\ssl_cert.pem" 
+             Remove-Item -Path $tempCertPath -Force
+         } else {
+             $tempCertPath = Join-Path $env:TEMP "temp_cert.cer"
+             $cert | Export-Certificate -FilePath $tempCertPath -Type CERT -Force
+             $certBytes = Get-Content -Path $tempCertPath -Encoding Byte
+             $certBase64 = [Convert]::ToBase64String($certBytes, [System.Base64FormattingOptions]::InsertLineBreaks)
+             $pemCert = "-----BEGIN CERTIFICATE-----`r`n$certBase64`r`n-----END CERTIFICATE-----"
+             Set-Content -Path "$SECRETS_DIR\ssl_cert.pem" -Value $pemCert -Force
+             Remove-Item -Path $tempCertPath -Force
+         }
         
         # Update Vault
         $keyContent = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content "$SECRETS_DIR\ssl_key.pem" -Raw)))
@@ -539,13 +351,6 @@ function Rotate-DbPassword {
         Set-Content -Path "$SECRETS_DIR\db_password.txt" -Value $newPassword -Force
                 
 # Function to save secret without newline
-function Save-Secret {
-    param (
-        [string]$Path,
-        [string]$Content
-    )
-    [System.IO.File]::WriteAllText($Path, $Content)
-}
         
         # Update Vault
         $body = @{

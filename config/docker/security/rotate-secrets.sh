@@ -22,7 +22,6 @@ save_secret() {
     local content="$2"
     echo -n "$content" > "$file"
 }
-
 # Function to rotate database password
 rotate_db_password() {
     local new_password=$(generate_random_string 32)
@@ -31,20 +30,20 @@ rotate_db_password() {
     # Update Vault if available
     if [ -n "$VAULT_TOKEN" ] && [ -n "$VAULT_ADDR" ]; then
        # Send request to Vault and check for successful response
-+        response=$(curl -s -w "\n%{http_code}" -X POST \
-+            -H "X-Vault-Token: $VAULT_TOKEN" \
-+            -H "Content-Type: application/json" \
-+            -d "{\"value\": \"$new_password\"}" \
-+            "$VAULT_ADDR/v1/secret/database/password")
-+        
+        response=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "X-Vault-Token: $VAULT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"value\": \"$new_password\"}" \
+            "$VAULT_ADDR/v1/secret/database/password")
+        
         status_code=$(echo "$response" | tail -n1)
         response_body=$(echo "$response" | sed '$d')
         
         if [ "$status_code" -ne 200 ] && [ "$status_code" -ne 204 ]; then
             echo "Error updating Vault with database password: $response_body"
-           return 1
-       fi
-    
+            return 1
+        fi
+    fi
 }
 
 # Function to rotate JWT secret
