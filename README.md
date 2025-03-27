@@ -39,7 +39,7 @@ This project implements a secure environment and configuration management system
 
    ```bash
    # On Windows
-   powershell -ExecutionPolicy Bypass -File rotate-secrets.ps1
+   powershell -ExecutionPolicy Bypass -File config/docker/security/rotate-secrets.ps1
 
    # On Linux/MacOS
    chmod +x config/docker/security/rotate-secrets.sh
@@ -103,7 +103,7 @@ To rotate credentials manually:
 
 ```bash
 # On Windows
- powershell -ExecutionPolicy Bypass -File config/docker/security/rotate-secrets.ps1
+powershell -ExecutionPolicy Bypass -File config/docker/security/rotate-secrets.ps1
 
 # On Linux/MacOS
 ./config/docker/security/rotate-secrets.sh

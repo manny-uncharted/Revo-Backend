@@ -70,6 +70,7 @@ function Generate-RandomString {
 }
 
 # Generate initial secrets without Vault (we'll add Vault later)
+# Generate initial secrets without Vault (we'll add Vault later)
 try {
     Write-Host "Generating initial secrets..."
 
@@ -86,8 +87,44 @@ try {
     Write-Host "Generated JWT secret"
 
     # Generate SSL certificate
-   # Generate SSL certificate
-Write-Host "Generating SSL certificate..."
+    Write-Host "Generating SSL certificate..."
+    $cert = New-SelfSignedCertificate -DnsName "localhost" `
+        -CertStoreLocation "cert:\CurrentUser\My" `
+        -KeyLength 4096 `
+        -KeyAlgorithm RSA `
+        -HashAlgorithm SHA256 `
+        -NotAfter (Get-Date).AddDays(365)
+
+    # Export certificate and private key
+    $certPath = Join-Path $SECRETS_DIR "ssl_cert.pem"
+    $keyPath = Join-Path $SECRETS_DIR "ssl_key.pem"
+
+    Export-Certificate -Cert $cert -FilePath $certPath -Type CERT -Force
+
+    # Export private key (this is a simplified version, in production you'd want to use proper PEM format)
+    $certBytes = $cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pfx)
+    Save-Secret -Path $keyPath -Content ([Convert]::ToBase64String($certBytes))
+
+    Write-Host "Generated SSL certificate and key"
+
+    # Vault token (for future use)
+    $vaultToken = Generate-RandomString 64
+    $vaultTokenPath = Join-Path $SECRETS_DIR "vault_token.txt"
+    Save-Secret -Path $vaultTokenPath -Content $vaultToken
+    Write-Host "Generated Vault token"
+
+    Write-Host "Secret generation completed successfully!"
+
+    # List generated files
+    Write-Host "`nGenerated files:"
+    Get-ChildItem $SECRETS_DIR | ForEach-Object {
+        Write-Host "- $($_.Name)"
+    }
+}
+catch {
+    Write-Error "Secret generation failed: $_"
+    exit 1
+} 
 
 # Check if OpenSSL is available
 $opensslAvailable = $null -ne (Get-Command "openssl" -ErrorAction SilentlyContinue)
@@ -288,24 +325,7 @@ catch {
     exit 1
 } 
 
-# Generate initial secrets without Vault (we'll add Vault later)
-try {
-    Write-Host "Generating initial secrets..."
 
-    # Database password
-    $dbPassword = Generate-RandomString 32
-    $dbPasswordPath = Join-Path $SECRETS_DIR "db_password.txt"
-    Set-Content -Path $dbPasswordPath -Value $dbPassword -Force
-    Write-Host "Generated database password"
-
-    # JWT secret
-    $jwtSecret = Generate-RandomString 64
-    $jwtSecretPath = Join-Path $SECRETS_DIR "jwt_secret.txt"
-    Set-Content -Path $jwtSecretPath -Value $jwtSecret -Force
-    Write-Host "Generated JWT secret"
-
-# Generate SSL certificate
-Write-Host "Generating SSL certificate..."
 
 # Check if OpenSSL is available
 $opensslAvailable = $null -ne (Get-Command "openssl" -ErrorAction SilentlyContinue)
@@ -434,7 +454,7 @@ function Rotate-SslCertificates {
         
         # Generate new certificate
         $cert = New-SelfSignedCertificate -DnsName "localhost" `
-            -CertStoreLocation "cert:\CurrentUser\My" `
+              -CertStoreLocation "cert:\CurrentUser\My" `
             -KeyLength 4096 `
             -KeyAlgorithm RSA `
             -HashAlgorithm SHA256 `
@@ -445,7 +465,7 @@ function Rotate-SslCertificates {
         
         # Update Vault
         $keyContent = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content "$SECRETS_DIR\ssl_key.pem" -Raw)))
-$certContent = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content "$SECRETS_DIR\ssl_cert.pem" -Raw)))
+        $certContent = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content "$SECRETS_DIR\ssl_cert.pem" -Raw)))
         
         $body = @{
             key = $keyContent
@@ -473,7 +493,7 @@ function Rotate-VaultToken {
         Set-Content -Path "$SECRETS_DIR\vault_token.txt" -Value $newToken -Force
         
         # Update environment variables
-       Get-ChildItem -Path (Join-Path (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) "env") -Recurse -Filter ".env" | ForEach-Object {
+     Get-ChildItem -Path (Join-Path (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) "env") -Recurse -Filter ".env" | ForEach-Object {
             $content = Get-Content $_.FullName
             $content = $content -replace "VAULT_TOKEN=.*", "VAULT_TOKEN=$newToken"
             Set-Content -Path $_.FullName -Value $content -Force

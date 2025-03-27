@@ -40,6 +40,30 @@ function Generate-RandomString {
         throw
     }
 }
+# Function to rotate DB password
+function Rotate-DbPassword {
+    try {
+        Write-Host "Rotating database password..."
+        $newPassword = Generate-RandomString 32
+        Set-Content -Path "$SECRETS_DIR\db_password.txt" -Value $newPassword -Force
+        
+        # Update Vault
+        $body = @{
+            value = $newPassword
+        } | ConvertTo-Json
+        
+        Invoke-RestMethod -Uri "$VAULT_ADDR/v1/secret/db/password" `
+            -Method Post `
+            -Headers @{"X-Vault-Token" = $VAULT_TOKEN} `
+            -ContentType "application/json" `
+            -Body $body
+        Write-Host "Database password rotated successfully"
+    }
+    catch {
+        Write-Error "Failed to rotate database password: $_"
+        throw
+    }
+}
 
 # Generate initial secrets without Vault (we'll add Vault later)
 try {

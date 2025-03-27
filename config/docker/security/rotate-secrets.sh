@@ -4,7 +4,9 @@
 set -e
 
 # Configuration
-SECRETS_DIR="./secrets"
+# Make path relative to script location
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SECRETS_DIR="$SCRIPT_DIR/../../secrets"
 VAULT_ADDR="http://localhost:8200"
 VAULT_TOKEN="${VAULT_TOKEN}"
 
@@ -67,7 +69,8 @@ rotate_ssl_certificates() {
     # Update Vault if available
     if [ -n "$VAULT_TOKEN" ] && [ -n "$VAULT_ADDR" ]; then
  # Create temporary file for JSON payload
-+       tmp_json=$(mktemp)
+       # Create temporary file for JSON payload
+       tmp_json=$(mktemp)
         key_b64=$(base64 -w 0 < "$SECRETS_DIR/ssl_key.pem")
         cert_b64=$(base64 -w 0 < "$SECRETS_DIR/ssl_cert.pem")
         
@@ -78,15 +81,13 @@ rotate_ssl_certificates() {
 }
 EOF
         
-        curl -s -X POST \
-            -H "X-Vault-Token: $VAULT_TOKEN" \
+       curl -s -X POST \
+           -H "X-Vault-Token: $VAULT_TOKEN" \
             -H "Content-Type: application/json" \
-            -d @"$tmp_json" \
-            "$VAULT_ADDR/v1/secret/ssl/cert"
-            
-        rm "$tmp_json"
-    fi
-}
+           -d @"$tmp_json" \
+           "$VAULT_ADDR/v1/secret/ssl/cert"
+           
+       rm "$tmp_json"
 
 # Function to rotate Vault token
 rotate_vault_token() {
