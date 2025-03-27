@@ -126,6 +126,18 @@ function Rotate-SslCertificates {
              $pem += [Convert]::ToBase64String($privateKeyBytes, [System.Base64FormattingOptions]::InsertLineBreaks)
              $pem += "`r`n-----END PRIVATE KEY-----"
              Set-Content -Path "$SECRETS_DIR\ssl_key.pem" -Value $pem -Force
+              
+             # Restrict permissions on the private key file
+             $acl = Get-Acl "$SECRETS_DIR\ssl_key.pem"
+             $acl.SetAccessRuleProtection($true, $false)
+             $adminRule = New-Object System.Security.AccessControl.FileSystemAccessRule("Administrators", "FullControl", "Allow")
+             $systemRule = New-Object System.Security.AccessControl.FileSystemAccessRule("SYSTEM", "FullControl", "Allow")
+             $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+             $userRule = New-Object System.Security.AccessControl.FileSystemAccessRule($currentUser, "FullControl", "Allow")
+             $acl.AddAccessRule($adminRule)
+             $acl.AddAccessRule($systemRule)
+             $acl.AddAccessRule($userRule)
+             Set-Acl "$SECRETS_DIR\ssl_key.pem" $acl
          }
         
         # Generate new certificate

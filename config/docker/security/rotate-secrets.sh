@@ -43,7 +43,7 @@ rotate_db_password() {
             echo "Error updating Vault with database password: $response_body"
             return 1
         fi
-    fi
+    fi 
 }
 
 # Function to rotate JWT secret
@@ -97,11 +97,20 @@ rotate_ssl_certificates() {
 }
 EOF
         
-       curl -s -X POST \
-           -H "X-Vault-Token: $VAULT_TOKEN" \
+        # Send request to Vault and check for successful response
+        response=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "X-Vault-Token: $VAULT_TOKEN" \
             -H "Content-Type: application/json" \
-           -d @"$tmp_json" \
-           "$VAULT_ADDR/v1/secret/ssl/cert"
+            -d @"$tmp_json" \
+            "$VAULT_ADDR/v1/secret/ssl/cert")
+        
+        status_code=$(echo "$response" | tail -n1)
+        response_body=$(echo "$response" | sed '$d')
+        
+        if [ "$status_code" -ne 200 ] && [ "$status_code" -ne 204 ]; then
+            echo "Error updating Vault with SSL certificate: $response_body"
+            return 1
+        fi
            
        rm "$tmp_json"
 }
