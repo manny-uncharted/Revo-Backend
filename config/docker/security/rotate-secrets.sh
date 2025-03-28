@@ -67,6 +67,7 @@ rotate_jwt_secret() {
              echo "Error updating Vault with JWT secret: $response_body"
              return 1
          fi
+    fi
 }
 
 # Function to rotate SSL certificates
@@ -111,6 +112,7 @@ EOF
             echo "Error updating Vault with SSL certificate: $response_body"
             return 1
         fi
+    fi
            
        rm "$tmp_json"
 }

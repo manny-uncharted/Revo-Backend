@@ -89,8 +89,7 @@ function Rotate-JwtSecret {
     try {
         Write-Host "Rotating JWT secret..."
         $newSecret = Generate-RandomString 64
-        Set-Content -Path "$SECRETS_DIR\jwt_secret.txt" -Value $newSecret -Force
-        
+        Save-Secret -Path "$SECRETS_DIR\jwt_secret.txt" -Content $newSecret        
         # Update Vault
         $body = @{
             value = $newSecret
