@@ -24,11 +24,7 @@ Write-Host "Starting secret rotation..."
          Write-Host "Created backup of existing secrets at $backupDir"
      }
 
-# Create secrets directory if it doesn't exist
-if (-not (Test-Path $SECRETS_DIR)) {
-    New-Item -ItemType Directory -Path $SECRETS_DIR -Force | Out-Null
-    Write-Host "Created secrets directory at: $SECRETS_DIR"
-}
+
 
 # Function to generate random string
 
