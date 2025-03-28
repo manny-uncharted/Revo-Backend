@@ -266,47 +266,46 @@ function Rotate-VaultToken {
         $newToken = $null
         $newToken = Generate-RandomString 64
         Set-Content -Path "$SECRETS_DIR\vault_token.txt" -Value $newToken -Force
+        $env:VAULT_TOKEN = $newToken  # Use caution if there's partial rotation
         
         # Update environment variables
-      $envPath = Join-Path (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) "env"
-      if (Test-Path $envPath) {
-          Get-ChildItem -Path $envPath -Recurse -Filter ".env" | ForEach-Object {
-              try {
-                  $filePath = $_.FullName
-                  $backupPath = "$filePath.bak"
-                  
-                  # Create backup first
-                  Copy-Item -Path $filePath -Destination $backupPath -Force
-                  
-                  $content = Get-Content $filePath
-                  $originalContent = $content
-                  $content = $content -replace "VAULT_TOKEN=.*", "VAULT_TOKEN=$newToken"
-
-                  # Verify replacement was successful
-                  if ($content -eq $originalContent -and $content -notcontains "VAULT_TOKEN=$newToken") {
-                  Write-Warning "Token replacement may not have worked in $filePath"
+        $envPath = Join-Path (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) "env"
+        if (Test-Path $envPath) {
+            Get-ChildItem -Path $envPath -Recurse -Filter ".env" | ForEach-Object {
+                try {
+                    $filePath = $_.FullName
+                    $backupPath = "$filePath.bak"
+                    
+                    # Create backup first
+                    Copy-Item -Path $filePath -Destination $backupPath -Force
+                    
+                    $content = Get-Content $filePath
+                    $originalContent = $content
+                    $content = $content -replace "VAULT_TOKEN=.*", "VAULT_TOKEN=$newToken"
+                    # Verify replacement was successful
+                    if ($content -eq $originalContent -and $content -notcontains "VAULT_TOKEN=$newToken") {
+                        Write-Warning "Token replacement may not have worked in $filePath"
                     }
-
-                  Set-Content -Path $filePath -Value $content -Force
-                  
-                  # Remove backup after successful update
-                   Remove-Item -Path $backupPath -Force
-              } catch {
-                  Write-Error "Failed to update environment file $($_.FullName): $_"
-                 
-                  # Try to restore from backup if it exists
-                  if (Test-Path $backupPath) {
-                      Write-Warning "Restoring from backup..."
-                      Copy-Item -Path $backupPath -Destination $filePath -Force
-                      Remove-Item -Path $backupPath -Force
-                  }
-                  
-                  throw
-              }
-          }
-     } else {
-          Write-Warning "Environment directory not found at $envPath"
-      }
+                    Set-Content -Path $filePath -Value $content -Force
+                    
+                    # Remove backup after successful update
+                    Remove-Item -Path $backupPath -Force
+                } catch {
+                    Write-Error "Failed to update environment file $($_.FullName): $_"
+                    
+                    # Try to restore from backup if it exists
+                    if (Test-Path $backupPath) {
+                        Write-Warning "Restoring from backup..."
+                        Copy-Item -Path $backupPath -Destination $filePath -Force
+                        Remove-Item -Path $backupPath -Force
+                    }
+                    
+                    throw
+                }
+            }
+        } else {
+            Write-Warning "Environment directory not found at $envPath"
+        }
         Write-Host "Vault token rotated successfully"
     }
     catch {
@@ -314,7 +313,6 @@ function Rotate-VaultToken {
         throw
     }
 }
-
 # Function to rotate DB password
 function Rotate-DbPassword {
     try {

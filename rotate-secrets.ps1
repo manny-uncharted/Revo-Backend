@@ -25,7 +25,7 @@ function Set-RestrictivePermissions {
     )
     try {
         $acl = Get-Acl $Path
-        $acl.SetAccessRuleProtection($true, $false)
+       +$acl.SetAccessRuleProtection($true, $true)
         
         # Add current user with full control
         $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
