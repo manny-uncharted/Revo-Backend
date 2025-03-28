@@ -5,7 +5,7 @@ $ErrorActionPreference = "Stop"
 
 # Configuration
 $SECRETS_DIR = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) "secrets"
-$VAULT_ADDR = "http://localhost:8200"
+$VAULT_ADDR="https://localhost:8200"
 $VAULT_TOKEN = $env:VAULT_TOKEN
 
 Write-Host "Starting secret rotation..."
@@ -88,8 +88,8 @@ $opensslAvailable = $null -ne (Get-Command "openssl" -ErrorAction SilentlyContin
 function Rotate-JwtSecret {
     try {
         Write-Host "Rotating JWT secret..."
-        $newSecret = Generate-RandomString 64
-        Save-Secret -Path "$SECRETS_DIR\jwt_secret.txt" -Content $newSecret        
+       $newSecret = Generate-RandomString 64
+       Save-Secret -Path "$SECRETS_DIR\jwt_secret.txt" -Content $newSecret
         # Update Vault
         $body = @{
             value = $newSecret

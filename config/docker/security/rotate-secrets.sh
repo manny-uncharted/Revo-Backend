@@ -24,7 +24,8 @@ save_secret() {
 }
 # Function to rotate database password
 rotate_db_password() {
-    local new_password=$(generate_random_string 32)
+     local new_password
+     new_password=$(generate_random_string 32)
     save_secret "$SECRETS_DIR/db_password.txt" "$new_password"
     
     # Update Vault if available
@@ -85,8 +86,7 @@ rotate_ssl_certificates() {
     
     # Update Vault if available
     if [ -n "$VAULT_TOKEN" ] && [ -n "$VAULT_ADDR" ]; then
- # Create temporary file for JSON payload
-       # Create temporary file for JSON payload
+    # Create temporary file for JSON payload
        tmp_json=$(mktemp)
         key_b64=$(base64 -w 0 < "$SECRETS_DIR/ssl_key.pem")
         cert_b64=$(base64 -w 0 < "$SECRETS_DIR/ssl_cert.pem")
@@ -114,10 +114,11 @@ EOF
         fi
     fi
            
-       rm "$tmp_json"
+        # Clean up temporary file
+        rm "$tmp_json"
 }
-#+# Function to rotate Vault token
- rotate_vault_token() {
+  # Function to rotate Vault token
+   rotate_vault_token() {
      local new_token=$(generate_random_string 64)
      save_secret "$SECRETS_DIR/vault_token.txt" "$new_token"
      
@@ -134,14 +135,31 @@ rotate_secrets() {
     # Create secrets directory if it doesn't exist
     mkdir -p "$SECRETS_DIR"
     chmod 700 "$SECRETS_DIR"
-    
+
+    # Backup existing secrets
+     BACKUP_DIR=$(mktemp -d)
+     if [ -d "$SECRETS_DIR" ]; then
+         cp -r "$SECRETS_DIR"/* "$BACKUP_DIR"/ 2>/dev/null || true
+         echo "Created backup of existing secrets"
+     fi
+     
+     # Set trap to restore from backup on failure
+     trap 'echo "Error occurred, restoring from backup..."; rm -rf "$SECRETS_DIR"; mkdir -p "$SECRETS_DIR"; cp -r "$BACKUP_DIR"/* "$SECRETS_DIR"/ 2>/dev/null || true; rm -rf "$BACKUP_DIR"; echo "Restored from backup"; exit 1' ERR
+     
+
     # Rotate all secrets
     rotate_db_password
     rotate_jwt_secret
     rotate_ssl_certificates
     rotate_vault_token
-    
+
+
+    # Clean up backup on success
+    rm -rf "$BACKUP_DIR"
     echo "Secret rotation completed successfully!"
+
+    # Remove trap
+    trap - ERR
 }
 
 # Execute rotation
