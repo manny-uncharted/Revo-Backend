@@ -326,33 +326,69 @@ function Rotate-DbPassword {
     }
 }
 
-# # Main rotation function
+ # Main rotation function
 function Rotate-Secrets {
+
     try {
-        Write-Host "Starting secret rotation..."
+    Write-Host "Starting secret rotation..."
 
-        # Create secrets directory if it doesn't exist
-        if (-not (Test-Path $SECRETS_DIR)) {
-            New-Item -ItemType Directory -Path $SECRETS_DIR -Force | Out-Null
-            Write-Host "Created secrets directory"
-        }
 
+    # Test Vault connectivity before proceeding
+    try {
+        Write-Host "Testing Vault connectivity..."
+        Invoke-RestMethod -Uri "$VAULT_ADDR/v1/sys/health" `
+            -Method Get `
+            -Headers @{"X-Vault-Token" = $VAULT_TOKEN} `
+            -TimeoutSec 10
+        Write-Host "Vault connectivity confirmed."
+    }
+    catch {
+        throw "Cannot connect to Vault server. Please check the VAULT_ADDR and VAULT_TOKEN settings: $_"
+    }
+    # Create secrets directory if it doesn't exist
+    if (-not (Test-Path $SECRETS_DIR)) {
+        New-Item -ItemType Directory -Path $SECRETS_DIR -Force | Out-Null
+        Write-Host "Created secrets directory"
+    }
+}
+  
+ 
         # Rotate all secrets
             # First validate we can access all the required resources before making any changes
             Write-Host "Validating access to required resources..."
 
         # Create a list of rotations to perform
         $rotations = @(
-            @{ Name = "Database Password"; Function = { Rotate-DbPassword } },
-            @{ Name = "JWT Secret"; Function = { Rotate-JwtSecret } },
-            @{ Name = "SSL Certificates"; Function = { Rotate-SslCertificates } },
-            @{ Name = "Vault Token"; Function = { Rotate-VaultToken } }
+            @{ Name = "Database Password"; Function = { Rotate-DbPassword }; IntervalDays = 30 },
+            @{ Name = "JWT Secret"; Function = { Rotate-JwtSecret }; IntervalDays = 90 },
+            @{ Name = "SSL Certificates"; Function = { Rotate-SslCertificates }; IntervalDays = 365 },
+            @{ Name = "Vault Token"; Function = { Rotate-VaultToken }; IntervalDays = 90 }
         )
         
         # Execute all rotations in sequence, stopping on first failure
         foreach ($rotation in $rotations) {
             try {
+                +        $lastRotationFile = "$SECRETS_DIR\.last_rotation_$($rotation.Name.Replace(' ', '_').ToLower()).txt"
+         $shouldRotate = $true
+         
+         if (Test-Path $lastRotationFile) {
+             $lastRotation = Get-Content $lastRotationFile
+             $daysSinceLastRotation = (New-TimeSpan -Start ([DateTime]::Parse($lastRotation)) -End (Get-Date)).Days
+             
+             if ($daysSinceLastRotation -lt $rotation.IntervalDays) {
+                 Write-Host "$($rotation.Name) was rotated $daysSinceLastRotation days ago (interval: $($rotation.IntervalDays) days). Skipping."
+                 $shouldRotate = $false
+             }
+         }
+        
+         if ($shouldRotate) {
                 & $rotation.Function
+                Set-Content -Path $lastRotationFile -Value (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+         }
+                 # Log successful rotation with timestamp
+                $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+                Write-Host "[$timestamp] $($rotation.Name) rotated successfully" -ForegroundColor Green
+                Add-Content -Path "$SECRETS_DIR\.rotation_history.log" -Value "[$timestamp] $($rotation.Name) rotated successfully"
             }
             catch {
                 Write-Error "$($rotation.Name) rotation failed: $_"
