@@ -95,6 +95,11 @@ function Generate-RandomString {
             "Hex" { [BitConverter]::ToString($bytes).Replace("-", "") }
             default { [Convert]::ToBase64String($bytes) }
         }
+
+        # Clear sensitive data from memory
+        [Array]::Clear($bytes, 0, $bytes.Length)
+        $bytes = $null
+        [System.GC]::Collect()
         
         # Ensure the string is exactly the requested length
         if ($result.Length -ge $Length) {
@@ -149,6 +154,23 @@ function Rotate-JwtSecret {
     }
 }
 
+ # Function to set restrictive permissions on files
+ function Set-RestrictivePermissions {
+     param (
+         [string]$Path
+     )
+     $acl = Get-Acl $Path
+     $acl.SetAccessRuleProtection($true, $false)
+     $adminRule = New-Object System.Security.AccessControl.FileSystemAccessRule("Administrators", "FullControl", "Allow")
+     $systemRule = New-Object System.Security.AccessControl.FileSystemAccessRule("SYSTEM", "FullControl", "Allow")
+     $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+     $userRule = New-Object System.Security.AccessControl.FileSystemAccessRule($currentUser, "FullControl", "Allow")
+     $acl.AddAccessRule($adminRule)
+     $acl.AddAccessRule($systemRule)
+     $acl.AddAccessRule($userRule)
+     Set-Acl $Path $acl
+}
+
 # Function to rotate SSL certificates
 function Rotate-SslCertificates {
     try {
@@ -158,17 +180,8 @@ function Rotate-SslCertificates {
         # Use OpenSSL to generate proper PEM format key if available
          if ($opensslAvailable) {
            & openssl genrsa -out "$SECRETS_DIR\ssl_key.pem" 4096
-          # Restrict permissions on the private key file
-           $acl = Get-Acl "$SECRETS_DIR\ssl_key.pem"
-           $acl.SetAccessRuleProtection($true, $false)
-           $adminRule = New-Object System.Security.AccessControl.FileSystemAccessRule("Administrators", "FullControl", "Allow")
-           $systemRule = New-Object System.Security.AccessControl.FileSystemAccessRule("SYSTEM", "FullControl", "Allow")
-           $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-           $userRule = New-Object System.Security.AccessControl.FileSystemAccessRule($currentUser, "FullControl", "Allow")
-           $acl.AddAccessRule($adminRule)
-           $acl.AddAccessRule($systemRule)
-           $acl.AddAccessRule($userRule)
-           Set-Acl "$SECRETS_DIR\ssl_key.pem" $acl
+           # Restrict permissions on the private key file
+           Set-RestrictivePermissions -Path "$SECRETS_DIR\ssl_key.pem"
          } else {
             # Fallback to .NET, but export in proper PEM format
              $key = New-Object System.Security.Cryptography.RSACryptoServiceProvider(4096)
@@ -178,12 +191,7 @@ function Rotate-SslCertificates {
              $pem += "`r`n-----END PRIVATE KEY-----"
              Set-Content -Path "$SECRETS_DIR\ssl_key.pem" -Value $pem -Force
 
-             # Clear sensitive data from memory
-            $privateKeyBytes = $null
-            $pem = $null
-            [System.GC]::Collect()
-                        
-             # Restrict permissions on the private key file
+                # Restrict permissions on the private key file
              $acl = Get-Acl "$SECRETS_DIR\ssl_key.pem"
              $acl.SetAccessRuleProtection($true, $false)
              $adminRule = New-Object System.Security.AccessControl.FileSystemAccessRule("Administrators", "FullControl", "Allow")
@@ -194,6 +202,14 @@ function Rotate-SslCertificates {
              $acl.AddAccessRule($systemRule)
              $acl.AddAccessRule($userRule)
              Set-Acl "$SECRETS_DIR\ssl_key.pem" $acl
+
+             # Clear sensitive data from memory
+            $privateKeyBytes = $null
+            $pem = $null
+            [System.GC]::Collect()
+                        
+        # Restrict permissions on the private key file
+         Set-RestrictivePermissions -Path "$SECRETS_DIR\ssl_key.pem"
          }
         
         # Generate new certificate
