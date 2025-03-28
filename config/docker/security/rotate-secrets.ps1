@@ -8,15 +8,21 @@ $SECRETS_DIR = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
 $VAULT_ADDR="https://localhost:8200"
 $VAULT_TOKEN = $env:VAULT_TOKEN
 
+# Validate Vault token
+ if ([string]::IsNullOrEmpty($VAULT_TOKEN)) {
+     Write-Error "VAULT_TOKEN environment variable is not set or empty"
+     exit 1
+ }
+
 Write-Host "Starting secret rotation..."
 
-    # Create backup of existing secrets
-    $backupDir = Join-Path $env:TEMP "secrets_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
-    if (Test-Path $SECRETS_DIR) {
-        New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
-        Copy-Item -Path "$SECRETS_DIR\*" -Destination $backupDir -Recurse -Force -ErrorAction SilentlyContinue
-        Write-Host "Created backup of existing secrets at $backupDir"
-    }
+     # Create backup of existing secrets
+     $backupDir = Join-Path $env:TEMP "secrets_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+     if (Test-Path $SECRETS_DIR) {
+         New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+         Copy-Item -Path "$SECRETS_DIR\*" -Destination $backupDir -Recurse -Force -ErrorAction SilentlyContinue
+         Write-Host "Created backup of existing secrets at $backupDir"
+     }
 
 # Create secrets directory if it doesn't exist
 if (-not (Test-Path $SECRETS_DIR)) {
@@ -31,7 +37,29 @@ function Save-Secret {
         [string]$Path,
         [string]$Content
     )
-    [System.IO.File]::WriteAllText($Path, $Content)
+         try {
+             if ([string]::IsNullOrEmpty($Path)) {
+                 throw "Path parameter cannot be null or empty"
+             }
+             
+             [System.IO.File]::WriteAllText($Path, $Content)
+             
+             # Set restrictive permissions on the secret file
+             $acl = Get-Acl $Path
+             $acl.SetAccessRuleProtection($true, $false)
+             $adminRule = New-Object System.Security.AccessControl.FileSystemAccessRule("Administrators", "FullControl", "Allow")
+             $systemRule = New-Object System.Security.AccessControl.FileSystemAccessRule("SYSTEM", "FullControl", "Allow")
+             $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+             $userRule = New-Object System.Security.AccessControl.FileSystemAccessRule($currentUser, "FullControl", "Allow")
+             $acl.AddAccessRule($adminRule)
+             $acl.AddAccessRule($systemRule)
+             $acl.AddAccessRule($userRule)
+             Set-Acl $Path $acl
+         }
+         catch {
+             Write-Error "Failed to save secret to $Path: $_"
+             throw
+         }
 }
 
 function Generate-RandomString {
@@ -95,6 +123,17 @@ function Rotate-JwtSecret {
         Write-Host "Rotating JWT secret..."
         $newSecret = $null
         $newSecret = Generate-RandomString 64
+        
+         # Securely delete old secret if it exists
+         $secretPath = "$SECRETS_DIR\jwt_secret.txt"
+         if (Test-Path $secretPath) {
+             # Overwrite with random data several times before deleting
+             for ($i = 0; $i -lt 3; $i++) {
+                 $randomData = Generate-RandomString -Length (Get-Item $secretPath).Length
+                 Set-Content -Path $secretPath -Value $randomData -Force
+             }
+         }
+        
         Save-Secret -Path "$SECRETS_DIR\jwt_secret.txt" -Content $newSecret
         # Update Vault
         $body = @{
@@ -123,6 +162,17 @@ function Rotate-SslCertificates {
         # Use OpenSSL to generate proper PEM format key if available
          if ($opensslAvailable) {
            & openssl genrsa -out "$SECRETS_DIR\ssl_key.pem" 4096
+          # Restrict permissions on the private key file
+           $acl = Get-Acl "$SECRETS_DIR\ssl_key.pem"
+           $acl.SetAccessRuleProtection($true, $false)
+           $adminRule = New-Object System.Security.AccessControl.FileSystemAccessRule("Administrators", "FullControl", "Allow")
+           $systemRule = New-Object System.Security.AccessControl.FileSystemAccessRule("SYSTEM", "FullControl", "Allow")
+           $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+           $userRule = New-Object System.Security.AccessControl.FileSystemAccessRule($currentUser, "FullControl", "Allow")
+           $acl.AddAccessRule($adminRule)
+           $acl.AddAccessRule($systemRule)
+           $acl.AddAccessRule($userRule)
+           Set-Acl "$SECRETS_DIR\ssl_key.pem" $acl
          } else {
             # Fallback to .NET, but export in proper PEM format
              $key = New-Object System.Security.Cryptography.RSACryptoServiceProvider(4096)
@@ -280,17 +330,27 @@ function Rotate-Secrets {
         }
 
         # Rotate all secrets
-         $rotationSuccess = $true
-         $errorMessages = @()
-         
-         try { Rotate-DbPassword } catch { $rotationSuccess = $false; $errorMessages += "DB Password: $_" }
-         try { Rotate-JwtSecret } catch { $rotationSuccess = $false; $errorMessages += "JWT Secret: $_" }
-         try { Rotate-SslCertificates } catch { $rotationSuccess = $false; $errorMessages += "SSL Certificates: $_" }
-         try { Rotate-VaultToken } catch { $rotationSuccess = $false; $errorMessages += "Vault Token: $_" }
-         
-         if (-not $rotationSuccess) {
-             throw "One or more rotations failed: $($errorMessages -join '; ')"
-         }
+            # First validate we can access all the required resources before making any changes
+            Write-Host "Validating access to required resources..."
+
+        # Create a list of rotations to perform
+        $rotations = @(
+            @{ Name = "Database Password"; Function = { Rotate-DbPassword } },
+            @{ Name = "JWT Secret"; Function = { Rotate-JwtSecret } },
+            @{ Name = "SSL Certificates"; Function = { Rotate-SslCertificates } },
+            @{ Name = "Vault Token"; Function = { Rotate-VaultToken } }
+        )
+        
+        # Execute all rotations in sequence, stopping on first failure
+        foreach ($rotation in $rotations) {
+            try {
+                & $rotation.Function
+            }
+            catch {
+                Write-Error "$($rotation.Name) rotation failed: $_"
+                throw "Secret rotation failed at $($rotation.Name). System may be in an inconsistent state."
+            }
+        }
 
 
         Write-Host "Secret rotation completed successfully!"
