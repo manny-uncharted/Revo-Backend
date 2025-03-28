@@ -7,7 +7,7 @@ set -e
 # Make path relative to script location
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 SECRETS_DIR="$SCRIPT_DIR/../../secrets"
-VAULT_ADDR="http://localhost:8200"
+VAULT_ADDR="https://localhost:8200"
 VAULT_TOKEN="${VAULT_TOKEN}"
 
 # Function to generate random string
@@ -23,9 +23,14 @@ save_secret() {
     echo -n "$content" > "$file"
 }
 # Function to rotate database password
-rotate_db_password() {
+    rotate_db_password() {
+   # Use a subshell to avoid leaking password in error traces
      local new_password
-     new_password=$(generate_random_string 32)
+     new_password=$(set -o pipefail; generate_random_string 32)
+     
+     # Set trap to clear password variable on exit
+     trap 'new_password="REDACTED"; unset new_password' RETURN
+    
     save_secret "$SECRETS_DIR/db_password.txt" "$new_password"
     
     # Update Vault if available
@@ -49,7 +54,8 @@ rotate_db_password() {
 
 # Function to rotate JWT secret
 rotate_jwt_secret() {
-    local new_secret=$(generate_random_string 64)
+     local new_secret
+     new_secret=$(generate_random_string 64)
     save_secret "$SECRETS_DIR/jwt_secret.txt" "$new_secret"
     
     # Update Vault if available
@@ -73,6 +79,12 @@ rotate_jwt_secret() {
 
 # Function to rotate SSL certificates
 rotate_ssl_certificates() {
+     # Check if openssl is available
+     if ! command -v openssl >/dev/null 2>&1; then
+         echo "Error: OpenSSL is not installed or not in PATH. Cannot generate SSL certificates."
+         return 1
+     fi
+
     # Generate new private key
     openssl genrsa -out "$SECRETS_DIR/ssl_key.pem" 4096
     chmod 600 "$SECRETS_DIR/ssl_key.pem"
@@ -119,12 +131,14 @@ EOF
 }
   # Function to rotate Vault token
    rotate_vault_token() {
-     local new_token=$(generate_random_string 64)
+     local new_token
+     new_token=$(generate_random_string 64)
      save_secret "$SECRETS_DIR/vault_token.txt" "$new_token"
      
      # Update environment variables
-     if [ -d "./env" ]; then
-         find ./env -type f -name ".env" -exec sed -i "s/VAULT_TOKEN=.*/VAULT_TOKEN=$new_token/" {} \;
+    ENV_DIR="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")/env"
+     if [ -d "$ENV_DIR" ]; then
+         find "$ENV_DIR" -type f -name ".env" -exec sed -i "s/VAULT_TOKEN=.*/VAULT_TOKEN=$new_token/" {} \;
      fi
 }
 
@@ -135,6 +149,22 @@ rotate_secrets() {
     # Create secrets directory if it doesn't exist
     mkdir -p "$SECRETS_DIR"
     chmod 700 "$SECRETS_DIR"
+   
+    # Verify directory ownership is correct
+    current_user=$(id -u -n)
+    current_group=$(id -g -n)
+    directory_owner=$(stat -c '%U' "$SECRETS_DIR")
+    directory_group=$(stat -c '%G' "$SECRETS_DIR")
+    
+    if [ "$directory_owner" != "$current_user" ] || [ "$directory_group" != "$current_group" ]; then
+        echo "Warning: Secrets directory has incorrect ownership. Expected $current_user:$current_group, got $directory_owner:$directory_group"
+        if [ "$(id -u)" -eq 0 ]; then
+            echo "Fixing ownership..."
+            chown "$current_user:$current_group" "$SECRETS_DIR"
+        else
+            echo "Cannot fix ownership without root privileges. Please run: sudo chown $current_user:$current_group $SECRETS_DIR"
+        fi
+    fi
 
     # Backup existing secrets
      BACKUP_DIR=$(mktemp -d)

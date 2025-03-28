@@ -10,6 +10,14 @@ $VAULT_TOKEN = $env:VAULT_TOKEN
 
 Write-Host "Starting secret rotation..."
 
+    # Create backup of existing secrets
+    $backupDir = Join-Path $env:TEMP "secrets_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+    if (Test-Path $SECRETS_DIR) {
+        New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+        Copy-Item -Path "$SECRETS_DIR\*" -Destination $backupDir -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host "Created backup of existing secrets at $backupDir"
+    }
+
 # Create secrets directory if it doesn't exist
 if (-not (Test-Path $SECRETS_DIR)) {
     New-Item -ItemType Directory -Path $SECRETS_DIR -Force | Out-Null
@@ -81,15 +89,13 @@ function Generate-RandomString {
 $opensslAvailable = $null -ne (Get-Command "openssl" -ErrorAction SilentlyContinue)
 
 
-# Check if OpenSSL is available
-#Initial secret generation will be handled by the Rotate-Secrets function
-
 # Function to rotate JWT secret
 function Rotate-JwtSecret {
     try {
         Write-Host "Rotating JWT secret..."
-       $newSecret = Generate-RandomString 64
-       Save-Secret -Path "$SECRETS_DIR\jwt_secret.txt" -Content $newSecret
+        $newSecret = $null
+        $newSecret = Generate-RandomString 64
+        Save-Secret -Path "$SECRETS_DIR\jwt_secret.txt" -Content $newSecret
         # Update Vault
         $body = @{
             value = $newSecret
@@ -190,15 +196,43 @@ function Rotate-SslCertificates {
 function Rotate-VaultToken {
     try {
         Write-Host "Rotating Vault token..."
+        $newToken = $null
         $newToken = Generate-RandomString 64
         Set-Content -Path "$SECRETS_DIR\vault_token.txt" -Value $newToken -Force
         
         # Update environment variables
-     Get-ChildItem -Path (Join-Path (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) "env") -Recurse -Filter ".env" | ForEach-Object {
-            $content = Get-Content $_.FullName
-            $content = $content -replace "VAULT_TOKEN=.*", "VAULT_TOKEN=$newToken"
-            Set-Content -Path $_.FullName -Value $content -Force
-        }
+      $envPath = Join-Path (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) "env"
+      if (Test-Path $envPath) {
+          Get-ChildItem -Path $envPath -Recurse -Filter ".env" | ForEach-Object {
+              try {
+                  $filePath = $_.FullName
+                  $backupPath = "$filePath.bak"
+                  
+                  # Create backup first
+                  Copy-Item -Path $filePath -Destination $backupPath -Force
+                  
+                  $content = Get-Content $filePath
+                  $content = $content -replace "VAULT_TOKEN=.*", "VAULT_TOKEN=$newToken"
+                  Set-Content -Path $filePath -Value $content -Force
+                  
+                  # Remove backup after successful update
+                   Remove-Item -Path $backupPath -Force
+              } catch {
+                  Write-Error "Failed to update environment file $($_.FullName): $_"
+                 
+                  # Try to restore from backup if it exists
+                  if (Test-Path $backupPath) {
+                      Write-Warning "Restoring from backup..."
+                      Copy-Item -Path $backupPath -Destination $filePath -Force
+                      Remove-Item -Path $backupPath -Force
+                  }
+                  
+                  throw
+              }
+          }
+     } else {
+          Write-Warning "Environment directory not found at $envPath"
+      }
         Write-Host "Vault token rotated successfully"
     }
     catch {
@@ -212,9 +246,9 @@ function Rotate-DbPassword {
     try {
         Write-Host "Rotating database password..."
         $newPassword = Generate-RandomString 32
-        Set-Content -Path "$SECRETS_DIR\db_password.txt" -Value $newPassword -Force
+        Save-Secret -Path "$SECRETS_DIR\db_password.txt" -Content $newPassword
                 
-# Function to save secret without newline
+
         
         # Update Vault
         $body = @{
@@ -246,15 +280,40 @@ function Rotate-Secrets {
         }
 
         # Rotate all secrets
-        Rotate-DbPassword
-        Rotate-JwtSecret
-        Rotate-SslCertificates
-        Rotate-VaultToken
+         $rotationSuccess = $true
+         $errorMessages = @()
+         
+         try { Rotate-DbPassword } catch { $rotationSuccess = $false; $errorMessages += "DB Password: $_" }
+         try { Rotate-JwtSecret } catch { $rotationSuccess = $false; $errorMessages += "JWT Secret: $_" }
+         try { Rotate-SslCertificates } catch { $rotationSuccess = $false; $errorMessages += "SSL Certificates: $_" }
+         try { Rotate-VaultToken } catch { $rotationSuccess = $false; $errorMessages += "Vault Token: $_" }
+         
+         if (-not $rotationSuccess) {
+             throw "One or more rotations failed: $($errorMessages -join '; ')"
+         }
+
 
         Write-Host "Secret rotation completed successfully!"
+        
+         # Clean up backup on success
+         if (Test-Path $backupDir) {
+             Remove-Item -Path $backupDir -Recurse -Force
+         }
     }
     catch {
         Write-Error "Secret rotation failed: $_"
+        
+         # Restore from backup
+         if (Test-Path $backupDir) {
+             Write-Host "Restoring secrets from backup..."
+             if (Test-Path $SECRETS_DIR) {
+                 Remove-Item -Path "$SECRETS_DIR\*" -Recurse -Force
+             }
+             Copy-Item -Path "$backupDir\*" -Destination $SECRETS_DIR -Recurse -Force
+             Remove-Item -Path $backupDir -Recurse -Force
+             Write-Host "Restored from backup"
+         }
+
         exit 1
     }
 }
