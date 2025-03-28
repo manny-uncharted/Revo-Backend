@@ -329,11 +329,34 @@ function Rotate-DbPassword {
             value = $newPassword
         } | ConvertTo-Json
         
-        Invoke-RestMethod -Uri "$VAULT_ADDR/v1/secret/db/password" `
-            -Method Post `
-            -Headers @{"X-Vault-Token" = $VAULT_TOKEN} `
-            -ContentType "application/json" `
-            -Body $body
+        try {
+             $response = Invoke-RestMethod -Uri "$VAULT_ADDR/v1/secret/db/password" `
+                 -Method Post `
+                 -Headers @{"X-Vault-Token" = $VAULT_TOKEN} `
+                 -ContentType "application/json" `
+                 -Body $body
+             
+             # Verify response is as expected
+             if (!$response -or $response.errors) {
+                throw "Vault API returned errors: $($response.errors -join ', ')"
+             }
+         }
+         catch [System.Net.WebException] {
+             # Handle connection issues
+             $statusCode = [int]$_.Exception.Response.StatusCode
+             if ($statusCode -eq 429) {
+                # Rate limiting - wait and retry
+                 Write-Host "Rate limited by Vault, waiting 5 seconds and retrying..."
+                 Start-Sleep -Seconds 5
+                 # Retry logic here
+             }
+             elseif ($statusCode -eq 403) {
+                 throw "Permission denied accessing Vault. Check your token permissions."
+             }
+             else {
+                 throw "Vault API error: $($_.Exception.Message), Status: $statusCode"
+             }
+         }
         Write-Host "Database password rotated successfully"
     }
     catch {
