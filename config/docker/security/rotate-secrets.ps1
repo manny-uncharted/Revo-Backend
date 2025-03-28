@@ -181,7 +181,12 @@ function Rotate-SslCertificates {
              $pem += [Convert]::ToBase64String($privateKeyBytes, [System.Base64FormattingOptions]::InsertLineBreaks)
              $pem += "`r`n-----END PRIVATE KEY-----"
              Set-Content -Path "$SECRETS_DIR\ssl_key.pem" -Value $pem -Force
-              
+
+             # Clear sensitive data from memory
+            $privateKeyBytes = $null
+            $pem = $null
+            [System.GC]::Collect()
+                        
              # Restrict permissions on the private key file
              $acl = Get-Acl "$SECRETS_DIR\ssl_key.pem"
              $acl.SetAccessRuleProtection($true, $false)
@@ -262,7 +267,14 @@ function Rotate-VaultToken {
                   Copy-Item -Path $filePath -Destination $backupPath -Force
                   
                   $content = Get-Content $filePath
+                  $originalContent = $content
                   $content = $content -replace "VAULT_TOKEN=.*", "VAULT_TOKEN=$newToken"
+
+                  # Verify replacement was successful
+                  if ($content -eq $originalContent -and $content -notcontains "VAULT_TOKEN=$newToken") {
+                  Write-Warning "Token replacement may not have worked in $filePath"
+                    }
+
                   Set-Content -Path $filePath -Value $content -Force
                   
                   # Remove backup after successful update
