@@ -16,7 +16,7 @@ export class CreateProductDTO {
   @IsOptional()
   description?: string;
 
-  @IsNumber()
+  @IsNumber() 
   price: number;
 
   @IsString()
@@ -29,6 +29,10 @@ export class CreateProductDTO {
 
   @IsNumber()
   stockQuantity: number;
+
+  @IsString()
+  @IsNotEmpty()
+  categoryId: string
 
   @IsDate()
   @Type(() => Date)
