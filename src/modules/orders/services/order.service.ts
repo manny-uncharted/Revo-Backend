@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   Injectable,
   InternalServerErrorException,
@@ -6,23 +7,50 @@ import {
 import { Repository } from 'typeorm';
 import { Order, OrderStatus } from '../entities/order.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { OrderRepository } from '../repositories/order.repository';
 import { CreateOrderDto } from '../dtos/create-order.dto';
 import { UpdateOrderDto } from '../dtos/update-order.dto';
 import { OrderItem } from '../entities/order-item.entity';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import { Redis } from 'ioredis';
 import { ProductService } from 'src/modules/products/services/product.service';
 import { OrderStatusUpdatedEvent } from '../events/status-update.event';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+interface OrderMetrics {
+  totalSales: string;
+  totalOrders: string;
+}
 
 @Injectable()
 export class OrderService {
   constructor(
-    @InjectRepository(Order)
-    private readonly orderRepository: Repository<Order>,
+    private readonly orderRepository: OrderRepository,
     @InjectRepository(OrderItem)
     private readonly orderItemRepository: Repository<OrderItem>,
+    @InjectRedis() private readonly redis: Redis,
     private readonly productService: ProductService,
     private eventEmitter: EventEmitter2,
   ) {}
+
+  async getSalesReport(startDate: string, endDate: string) {
+    const cacheKey = `salesReport:${startDate}:${endDate}`;
+    let cachedData: string | null;
+    try {
+      cachedData = await this.redis.get(cacheKey);
+    } catch (error) {
+      console.error('Redis error:', error);
+    }
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
+    const data = await this.orderRepository.getSalesReport(startDate, endDate);
+    try {
+      await this.redis.set(cacheKey, JSON.stringify(data), 'EX', 3600);
+    } catch (error) {
+      console.error('Redis error:', error);
+    }
+    return data;
+  }
 
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
     const orderItems: OrderItem[] = [];
@@ -71,7 +99,9 @@ export class OrderService {
     return savedOrder;
   }
   async cancel(id: string): Promise<Order> {
-    const order = await this.orderRepository.findOne({ where: { id } });
+    const order = await this.orderRepository.findOne({
+      where: { id: id },
+    });
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
@@ -87,7 +117,7 @@ export class OrderService {
   async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
 
       const order = await this.orderRepository.findOne({
-        where: { id },
+        where: { id: id },
         relations: { items: true },
       });
 
@@ -187,6 +217,26 @@ export class OrderService {
       }
       console.log(error);
       throw new InternalServerErrorException('Failed to delete order');
+    }
+  }
+  async getOrderMetrics(
+    startDate: string,
+    endDate: string,
+  ): Promise<OrderMetrics> {
+    try {
+      const query = this.orderRepository
+        .createQueryBuilder('order')
+        .select('SUM(order.totalAmount)', 'totalSales')
+        .addSelect('COUNT(order.id)', 'totalOrders')
+        .where('order.createdAt BETWEEN :startDate AND :endDate', {
+          startDate,
+          endDate,
+        })
+        .getRawOne();
+      return query;
+    } catch (error) {
+      console.error('Error getting order metrics:', error);
+      throw new InternalServerErrorException('Failed to fetch order metrics');
     }
   }
 }
