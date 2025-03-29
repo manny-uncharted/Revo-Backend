@@ -1,12 +1,13 @@
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
 import { API_VERSIONS, DEFAULT_VERSION } from './api-version.config';
+import { version } from '../../../package.json';
 
 export const setupSwagger = (app: INestApplication) => {
     const config = new DocumentBuilder()
         .setTitle('Farmers Marketplace API')
         .setDescription('API documentation for the Farmers Marketplace platform')
-        .setVersion('1.0')
+        .setVersion(version)
         .addApiKey({ type: 'apiKey', name: 'Authorization', in: 'header' }, 'access-token')
         .addTag('auth', 'Authentication endpoints')
         .addTag('users', 'User management endpoints')
@@ -17,9 +18,9 @@ export const setupSwagger = (app: INestApplication) => {
         .addServer('/api/v2');
 
     // Add version-specific servers
-    API_VERSIONS.forEach((version) => {
-        if (version.status === 'active') {
-            config.addServer(`/api/${version.version}`);
+    API_VERSIONS.forEach((apiVersion) => {
+        if (apiVersion.status === 'active') {
+            config.addServer(`/api/${apiVersion.version}`);
         }
     });
 
