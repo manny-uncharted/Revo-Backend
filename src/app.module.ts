@@ -8,6 +8,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './modules/logging/interceptors/logging.interceptor';
 import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { BullModule } from '@nestjs/bullmq';
 import { Order } from './modules/orders/entities/order.entity';
 
@@ -26,6 +28,8 @@ import { Order } from './modules/orders/entities/order.entity';
       }),
     }),
     LoggingModule,
+    ProductsModule,
+    OrdersModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -49,13 +53,13 @@ import { Order } from './modules/orders/entities/order.entity';
       name: 'exportQueue',
     }),
   ],
+  controllers: [AppController],
   providers: [
+    AppService,
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
-    ProductsModule,
-    OrdersModule,
   ],
 })
 export class AppModule {}
