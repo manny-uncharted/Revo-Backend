@@ -1,5 +1,12 @@
 import { BaseEntity } from '../../../shared/entities/base.entity';
-import { Entity, Column, DeleteDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { Category } from './category.entity';
 
 @Entity('products')
 export class Product extends BaseEntity {
@@ -20,6 +27,15 @@ export class Product extends BaseEntity {
 
   @Column()
   stockQuantity: number;
+
+  @ManyToOne(() => Category, (category) => category.products, {
+    nullable: false,
+  })
+  @JoinColumn({ name: 'categoryId' })
+  category: Category;
+
+  @Column()
+  categoryId: string;
 
   @Column({ type: 'timestamp' })
   harvestDate: Date;

@@ -30,6 +30,10 @@ export class CreateProductDTO {
   @IsNumber()
   stockQuantity: number;
 
+  @IsString()
+  @IsNotEmpty()
+  categoryId: string
+
   @IsDate()
   @Type(() => Date)
   harvestDate: Date;
