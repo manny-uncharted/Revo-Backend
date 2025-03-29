@@ -22,12 +22,13 @@ export class Product extends BaseEntity {
   @Column()
   unit: string;
 
-  @Column('json', { nullable: true })
+  @Column('simple-json', { nullable: true })
   images: string[];
 
   @Column()
   stockQuantity: number;
 
+  @Column({ type: 'datetime' })
   @ManyToOne(() => Category, (category) => category.products, {
     nullable: false,
   })

@@ -17,7 +17,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "seed": "ts-node -r tsconfig-paths/register src/database/seeds/seed.command.ts",
+    "seed:clean": "ts-node -r tsconfig-paths/register src/database/seeds/seed.command.ts --clean",
+    "seed:dev": "ts-node -r tsconfig-paths/register src/database/seeds/seed.command.ts --env=development",
+    "seed:test": "ts-node -r tsconfig-paths/register src/database/seeds/seed.command.ts --env=test --clean"
   },
   "dependencies": {
     "@nestjs-modules/ioredis": "^2.0.2",
@@ -59,6 +63,7 @@
     "winston-transport": "^4.9.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.6.0",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.4.15",
