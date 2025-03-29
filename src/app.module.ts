@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,6 +8,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './modules/logging/interceptors/logging.interceptor';
 import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { BullModule } from '@nestjs/bullmq';
+import { Order } from './modules/orders/entities/order.entity';
 
 @Module({
   imports: [
@@ -18,9 +21,33 @@ import { OrdersModule } from './modules/orders/orders.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         ...configService.get('database'),
+        entities: [Order],
+        synchronize: process.env.NODE_ENV !== 'production',
       }),
     }),
     LoggingModule,
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('REDIS_HOST', 'localhost'),
+          port: configService.get('REDIS_PORT', 6379),
+          password: configService.get('REDIS_PASSWORD', undefined),
+          tls: configService.get('REDIS_TLS_ENABLED', false)
+            ? {
+                rejectUnauthorized: configService.get(
+                  'REDIS_REJECT_UNAUTHORIZED',
+                  true,
+                ),
+              }
+            : undefined,
+        },
+      }),
+      inject: [ConfigService],
+    }),
+    BullModule.registerQueue({
+      name: 'exportQueue',
+    }),
   ],
   providers: [
     {
