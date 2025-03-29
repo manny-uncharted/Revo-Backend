@@ -22,6 +22,9 @@ export class ProductController {
     try {
       return await this.productService.create(createProductDTO);
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      }
       if (error instanceof InternalServerErrorException) {
         throw new InternalServerErrorException(error.message);
       }
