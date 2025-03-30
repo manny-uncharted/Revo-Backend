@@ -97,8 +97,10 @@ export class OrderController {
       throw new InternalServerErrorException('Failed to delete order');
     }
   }
-  @UseGuards(JwtAuthGuard)
+
+
   @Get('/reports/sales')
+  @UseGuards(JwtAuthGuard)
   async getSalesReport(
     @Query('startDate', new ParseDatePipe()) startDate: Date,
     @Query('endDate', new ParseDatePipe()) endDate: Date,
@@ -136,4 +138,5 @@ export class OrderController {
       );
     }
   }
+
 }
