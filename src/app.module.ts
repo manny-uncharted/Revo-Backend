@@ -1,7 +1,7 @@
-/* eslint-disable prettier/prettier */
-import { Module } from '@nestjs/common';
+import { Module, CacheModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import * as redisStore from 'cache-manager-redis-store';
 import databaseConfig from './config/database.config';
 import { LoggingModule } from './modules/logging/logging.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -47,7 +47,19 @@ import { BackupModule } from './database/backup/backup.module';
         ...configService.get('database'),
       }),
     }),
+     CacheModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        store: redisStore,
+        host: configService.get('REDIS_HOST') || 'localhost',
+        port: configService.get('REDIS_PORT') || 6379,
+        ttl: 600, 
+      }),
+    }),
+
     LoggingModule,
+    ProductsModule,
+    OrdersModule,
     BackupModule,
   ],
   providers: [

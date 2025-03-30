@@ -1,15 +1,9 @@
 import { BaseEntity } from '../../../shared/entities/base.entity';
-import {
-  Entity,
-  Column,
-  DeleteDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { Category } from './category.entity';
+import { Entity, Column, DeleteDateColumn, Index } from 'typeorm';
 
 @Entity('products')
 export class Product extends BaseEntity {
+  @Index() // Adding an index to speed up searches by name
   @Column({ type: 'varchar', length: 255, nullable: false })
   name: string;
 
