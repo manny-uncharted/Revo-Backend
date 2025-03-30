@@ -1,6 +1,22 @@
-import { BaseEntity } from 'src/shared/entities/base.entity';
-import { Entity, Column, OneToMany, DeleteDateColumn } from 'typeorm';
+/* eslint-disable prettier/prettier */
+import { BaseEntity, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  OneToMany,
+  DeleteDateColumn,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+} from 'typeorm';
 import { OrderItem } from './order-item.entity';
+
+export interface ProductSnapshot {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -25,15 +41,35 @@ export class Order extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: false })
   stellarPublicKey: string;
 
-  @Column({ type: 'timestamp', nullable: false })
+  @Column({ type: 'datetime', nullable: false })
   paymentDeadline: Date;
 
-  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
+  @OneToMany(() => OrderItem, (orderItem: { order: any }) => orderItem.order, {
+    cascade: true,
+  })
   items: OrderItem[];
 
-  @Column('json', { nullable: true })
+  @Column('simple-json', { nullable: true })
   metadata: Record<string, any>;
 
   @DeleteDateColumn({ nullable: true })
   deletedAt: Date;
+
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column()
+  customerId: number;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @Column('jsonb')
+  productSnapshot: ProductSnapshot;
+
+  @ManyToOne(() => Order, (order) => order.items)
+  order: Order;
+
+  @Column({ type: 'jsonb', default: [] })
+  statusHistory: { status: OrderStatus; timestamp: Date }[];
 }
