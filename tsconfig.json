@@ -19,6 +19,7 @@
     "noFallthroughCasesInSwitch": false,
     "allowJs": true,
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "paths": {
       "*": ["node_modules/*"]
     }

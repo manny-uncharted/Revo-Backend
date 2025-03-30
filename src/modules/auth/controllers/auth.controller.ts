@@ -13,12 +13,12 @@ import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
 import { Request } from 'express';
 import { promisify } from 'util';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard'; 
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { User } from '../entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   // Registration endpoint
   @Post('register')
