@@ -69,4 +69,7 @@ export class Order extends BaseEntity {
 
   @ManyToOne(() => Order, (order) => order.items)
   order: Order;
+
+  @Column({ type: 'jsonb', default: [] })
+  statusHistory: { status: OrderStatus; timestamp: Date }[];
 }
