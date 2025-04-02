@@ -1,9 +1,9 @@
-import { 
-  Controller, 
-  Get, 
-  Query, 
-  ValidationPipe, 
-  BadRequestException, 
+import {
+  Controller,
+  Get,
+  Query,
+  ValidationPipe,
+  BadRequestException,
   Logger,
   Inject,
 } from "@nestjs/common";
@@ -21,21 +21,19 @@ export class SearchController {
   constructor(
     private readonly searchService: SearchService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  ) { }
 
   @Get("search")
   async searchProducts(
     @Query(new ValidationPipe({
-      transform: true, 
-      whitelist: true, 
-      forbidNonWhitelisted: true, 
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
       skipMissingProperties: false
     })) queryParams: CombinedSearchFilterDto
   ) {
     try {
       const { search, filter } = queryParams;
-
-      // Genera una clave de caché única basada en los parámetros de la consulta
       const cacheKey = `search_products:${JSON.stringify({ search, filter })}`;
       const cachedResult = await this.cacheManager.get(cacheKey);
       if (cachedResult) {
@@ -48,16 +46,23 @@ export class SearchController {
       if (!search?.query && !filter?.category && !filter?.minPrice && !filter?.maxPrice && !filter?.brand) {
         throw new BadRequestException("At least one search or filter parameter is required.");
       }
-
       const result = await this.searchService.searchProducts(search, filter);
-      await this.cacheManager.set(cacheKey, result, 600); // 600 segundos (10 minutos)
-
+      try {
+        await this.cacheManager.set(cacheKey, result, 600); // 600 segundos (10 minutos)
+      } catch (cacheError) {
+        this.logger.warn(
+          `Failed to set cache for key: ${cacheKey}, reason: ${cacheError.message}`
+        );
+      }
       this.logger.log(`Cache miss for key: ${cacheKey}, storing result`);
       return result;
-    } catch (error) {
-      this.logger.error("Error in searchProducts", error);
-      throw error;
+
+    } catch (cacheError) {
+      this.logger.warn(
+        `Failed to set cache for key: cacheKey, reason: ${cacheError.message}`
+      );
     }
+
   }
 
   private logSearchAnalytics(search?: SearchDto, filter?: FilterDto): void {
@@ -66,12 +71,12 @@ export class SearchController {
       query: search?.query || null,
       filters: filter
         ? {
-            category: filter.category || null,
-            price: filter.minPrice || filter.maxPrice
-              ? { min: filter.minPrice || null, max: filter.maxPrice || null }
-              : null,
-            brand: filter.brand || null,
-          }
+          category: filter.category || null,
+          price: filter.minPrice || filter.maxPrice
+            ? { min: filter.minPrice || null, max: filter.maxPrice || null }
+            : null,
+          brand: filter.brand || null,
+        }
         : null,
     };
 

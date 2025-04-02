@@ -13,10 +13,15 @@ export const securityConfig = (configService: ConfigService) => {
 };
 
 export const jwtConstants = {
-  secret: process.env.JWT_SECRET || (() => {
-    console.error('WARNING: JWT_SECRET not set! Using a random secret that will change on restart.');
-    return require('crypto').randomBytes(32).toString('hex');
-  })(),
+    secret: process.env.JWT_SECRET || (() => {
+        if (process.env.NODE_ENV === 'production') {
+          throw new Error('JWT_SECRET must be set in production environment');
+        }
+        console.error('WARNING: JWT_SECRET not set! Using a random secret that will change on restart.');
+        // Use ES modules import instead of require
+        const crypto = require('crypto');
+       return crypto.randomBytes(32).toString('hex');
+      })(),
   expiresIn: process.env.ACCESS_TOKEN_EXPIRATION || '3600s', 
 };
 

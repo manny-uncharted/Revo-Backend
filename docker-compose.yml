@@ -10,11 +10,11 @@ services:
       - '3000:3000'
     environment:
       - NODE_ENV=development
-      - POSTGRES_HOST=localhost
+      - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=root
-      - POSTGRES_DB=revobackend
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=mydatabase
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules

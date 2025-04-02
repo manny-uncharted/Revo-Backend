@@ -21,13 +21,15 @@ import { Order } from './entities/order.entity';
   imports: [
     TypeOrmModule.forFeature([Order, OrderItem, Payment]),
     ProductsModule,
-    RedisModule.forRoot({
-      type: 'single',
-      options: {
-        host: 'localhost',
-        port: 6379,
-      },
-    }),
+        // If using local RedisModule, remove this completely
+        // If @nestjs-modules/ioredis is required:
+        RedisModule.forRoot({
+          type: 'single',
+          options: {
+            host: process.env.REDIS_HOST || 'localhost',
+            port: parseInt(process.env.REDIS_PORT || '6379', 10),
+          },
+        }),
     BullModule.registerQueue({
       name: 'notification',
     }),

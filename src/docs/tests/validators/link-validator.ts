@@ -1,28 +1,18 @@
-// src/docs/tests/validators/link-validator.ts
-import { SiteChecker } from 'broken-link-checker';
+import { execSync } from 'child_process';
+import { existsSync } from 'fs';
+//IF npm install linkinator --save-dev
+export async function checkLinks() {
+  console.log('Running link validation...');
+  const specPath = 'src/docs/openapi-spec.json';
 
-export async function checkLinks(port: number = 3000) {
+  if (!existsSync(specPath)) {
+    throw new Error(`OpenAPI spec file not found at ${specPath}. Ensure validateSchema runs first.`);
+  }
+
   try {
-  
-    await new Promise<void>((resolve, reject) => {
-      const siteChecker = new SiteChecker(
-        { excludedKeywords: ['localhost'] },
-        {
-          link: (result) => {
-            if (result.broken) {
-              reject(new Error(`Broken link found: ${result.url.original} (${result.brokenReason})`));
-            }
-          },
-          end: () => {
-            console.log('Link validation passed');
-            resolve();
-          },
-        }
-      );
-
-      siteChecker.enqueue(`http://localhost:${port}/api/docs`); 
-    });
+    execSync('npx linkinator src/docs/openapi-spec.json --skip "http://localhost|https://example.com"', { stdio: 'inherit' });
+    console.log('Link validation passed');
   } catch (error) {
-    throw new Error(`Link validation error: ${error.message}`);
+    throw new Error('Link validation failed: ' + error.message);
   }
 }

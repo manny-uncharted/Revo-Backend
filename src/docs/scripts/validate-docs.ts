@@ -1,11 +1,13 @@
 import { NestFactory } from '@nestjs/core';
-import {AppModule } from '../../app.module'; 
+import { AppModule } from '../../app.module';
 import { lintDocs } from '../tests/validators/doc-linter';
 import { validateSchema } from '../tests/validators/schema-validator';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { API_VERSIONS, DEFAULT_VERSION } from '../../docs/config/api-version.config';
 import { version } from '../../../package.json';
 import { ProductSchema, OrderSchema, OrderItemSchema, UserSchema } from '../../docs/schemas/schemas';
+import { validateExamples } from '../tests/validators/example-validator';
+import { checkLinks } from '../tests/validators/link-validator';
 
 async function generateOpenApiDocument(app: any) {
   console.log('Generating OpenAPI document...');
@@ -40,7 +42,7 @@ async function generateOpenApiDocument(app: any) {
 }
 
 async function validateDocs() {
-  const app = await NestFactory.create(AppModule); 
+  const app = await NestFactory.create(AppModule);
   try {
     const openApiDocument = await generateOpenApiDocument(app);
     console.log('OpenAPI document generated successfully');
@@ -53,6 +55,14 @@ async function validateDocs() {
     await validateSchema(openApiDocument);
     console.log('validateSchema completed successfully');
 
+    console.log('Running validateExamples...');
+    await validateExamples(openApiDocument);
+    console.log('validateExamples completed successfully');
+
+    console.log('Running checkLinks...');
+    await checkLinks(); 
+    console.log('checkLinks completed successfully');
+
     console.log('Documentation validation completed successfully');
   } catch (error) {
     console.error('Documentation validation failed:', error.message);
@@ -63,6 +73,8 @@ async function validateDocs() {
     console.log('Application closed successfully');
   }
 }
+
+
 
 validateDocs()
   .then(() => {

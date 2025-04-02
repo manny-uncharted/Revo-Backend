@@ -1,34 +1,48 @@
-import { readFileSync } from 'fs';
 import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
 import { ProductSchema, OrderSchema, OrderItemSchema, UserSchema } from '../../schemas/schemas';
+import { generateJsonSchema } from '../../utils/generate-json-schema';
 
 const ajv = new Ajv({ allErrors: true });
-addFormats(ajv); 
 
-export async function testExamples() {
-  const examplesDir = 'src/docs/tests/examples/';
-  const exampleFiles = {
-    'product.example.json': ProductSchema,
-    'order.example.json': OrderSchema,
-    'order-item.example.json': OrderItemSchema,
-    'user.example.json': UserSchema,
-  };
+export async function validateExamples(openApiSpec?: any) {
+  try {
+    if (!openApiSpec) {
+      throw new Error('OpenAPI spec must be provided');
+    }
 
-  for (const [file, schema] of Object.entries(exampleFiles)) {
-    try {
-      const example = JSON.parse(readFileSync(`${examplesDir}${file}`, 'utf8'));
-      
-      const validate = ajv.compile(schema);
-      const valid = validate(example);
+    const generatedSchemas = openApiSpec.components?.schemas || {};
 
-      if (!valid) {
-        throw new Error(`Example validation failed for ${file}: ${JSON.stringify(validate.errors)}`);
+    const schemaClasses = {
+      ProductSchema,
+      OrderSchema,
+      OrderItemSchema,
+      UserSchema,
+    };
+    //IF npm install ts-json-schema-generator ajv
+    for (const [schemaName, SchemaClass] of Object.entries(schemaClasses)) {
+      const schema = generateJsonSchema(schemaName, 'src/docs/schemas/schemas.ts');
+      const validate = ajv.compile(schema); 
+
+      const generatedSchema = generatedSchemas[schemaName];
+      if (!generatedSchema) {
+        throw new Error(`Schema ${schemaName} not found in OpenAPI specification`);
       }
 
-      console.log(`Example validation passed for ${file}`);
-    } catch (error) {
-      throw new Error(`Example validation error for ${file}: ${error.message}`);
+      const properties = generatedSchema.properties || {};
+      for (const [propName, prop] of Object.entries(properties)) {
+        const example = (prop as any).example;
+        if (example !== undefined) {
+          const valid = validate({ [propName]: example }); // Validar el ejemplo
+          if (!valid) {
+            console.log(`Validation errors for ${schemaName}.${propName}:`, validate.errors);
+            throw new Error(`Example for ${propName} in ${schemaName} is invalid`);
+          }
+        }
+      }
     }
+
+    console.log('Example validation passed');
+  } catch (error) {
+    throw new Error(`Example validation error: ${error.message}`);
   }
 }
