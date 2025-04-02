@@ -6,6 +6,7 @@ import {
   BadRequestException,
   Logger,
   Inject,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -61,7 +62,7 @@ export class SearchController {
           if (error instanceof BadRequestException) {
               throw error; // Re-throw BadRequestException for validation errors
             }
-            throw new Error(`Failed to process search: ${error.message}`);
+            throw new InternalServerErrorException(`Failed to process search: ${error.message}`);
     }
   }
 
