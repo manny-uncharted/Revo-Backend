@@ -55,10 +55,7 @@ export class SearchController {
           `Failed to set cache for key: ${cacheKey}, reason: ${cacheError.message}`
         );
       }
-
-      this.logger.log(`Cache miss for key: ${cacheKey}, storing result`);
       return result;
-
     } catch (error) {
       this.logger.error(`Error processing search request: ${error.message}`, error.stack);
           if (error instanceof BadRequestException) {
