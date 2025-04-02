@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-
+import * as crypto from 'crypto';
 export const securityConfig = (configService: ConfigService) => {
   return ThrottlerModule.forRoot({
     throttlers: [
@@ -18,8 +18,8 @@ export const jwtConstants = {
           throw new Error('JWT_SECRET must be set in production environment');
         }
         console.error('WARNING: JWT_SECRET not set! Using a random secret that will change on restart.');
-        // Use ES modules import instead of require
-        const crypto = require('crypto');
+        // Use dynamic import instead of require
+        const crypto = globalThis.require('crypto');
        return crypto.randomBytes(32).toString('hex');
       })(),
   expiresIn: process.env.ACCESS_TOKEN_EXPIRATION || '3600s', 

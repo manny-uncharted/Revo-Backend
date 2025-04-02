@@ -19,7 +19,7 @@ export async function validateExamples(openApiSpec?: any) {
       UserSchema,
     };
     //IF npm install ts-json-schema-generator ajv
-    for (const [schemaName, SchemaClass] of Object.entries(schemaClasses)) {
+    for (const [schemaName] of Object.entries(schemaClasses)) {
       const schema = generateJsonSchema(schemaName, 'src/docs/schemas/schemas.ts');
       const validate = ajv.compile(schema); 
 

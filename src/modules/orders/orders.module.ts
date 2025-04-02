@@ -1,7 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RedisModule } from '@nestjs-modules/ioredis';
 import { OrderRepository } from './repositories/order.repository';
 import { OrderService } from './services/order.service';
 import { OrderController } from './controllers/order.controller';
@@ -21,15 +20,6 @@ import { Order } from './entities/order.entity';
   imports: [
     TypeOrmModule.forFeature([Order, OrderItem, Payment]),
     ProductsModule,
-        // If using local RedisModule, remove this completely
-        // If @nestjs-modules/ioredis is required:
-        RedisModule.forRoot({
-          type: 'single',
-          options: {
-            host: process.env.REDIS_HOST || 'localhost',
-            port: parseInt(process.env.REDIS_PORT || '6379', 10),
-          },
-        }),
     BullModule.registerQueue({
       name: 'notification',
     }),

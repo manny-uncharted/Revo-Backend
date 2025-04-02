@@ -32,34 +32,36 @@ export class SearchController {
       skipMissingProperties: false
     })) queryParams: CombinedSearchFilterDto
   ) {
+    let cacheKey: string;
     try {
       const { search, filter } = queryParams;
-      const cacheKey = `search_products:${JSON.stringify({ search, filter })}`;
+      cacheKey = `search_products:${JSON.stringify({ search, filter })}`;
       const cachedResult = await this.cacheManager.get(cacheKey);
+
       if (cachedResult) {
         this.logger.log(`Cache hit for key: ${cacheKey}`);
         return cachedResult;
       }
 
       this.logSearchAnalytics(search, filter);
-
       if (!search?.query && !filter?.category && !filter?.minPrice && !filter?.maxPrice && !filter?.brand) {
         throw new BadRequestException("At least one search or filter parameter is required.");
       }
       const result = await this.searchService.searchProducts(search, filter);
       try {
-        await this.cacheManager.set(cacheKey, result, 600); // 600 segundos (10 minutos)
+        await this.cacheManager.set(cacheKey, result, 600);
       } catch (cacheError) {
         this.logger.warn(
           `Failed to set cache for key: ${cacheKey}, reason: ${cacheError.message}`
         );
       }
+
       this.logger.log(`Cache miss for key: ${cacheKey}, storing result`);
       return result;
 
     } catch (cacheError) {
       this.logger.warn(
-        `Failed to set cache for key: cacheKey, reason: ${cacheError.message}`
+        `Failed to set cache for key: ${cacheKey}, reason: ${cacheError.message}`
       );
     }
 

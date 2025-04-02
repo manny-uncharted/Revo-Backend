@@ -17,17 +17,23 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BullModule } from '@nestjs/bullmq';
 import { BackupModule } from './database/backup/backup.module';
-import { RedisModule } from './redis/redis.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
+import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
   imports: [
-    RedisModule.forRoot(), 
-    BullModule.forRootAsync({
-      imports: [RedisModule],
-      useFactory: async (redisClient: any) => ({
-        connection: redisClient,
-      }),
-      inject: ['REDIS_CLIENT'],
+    RedisModule.forRoot({
+      type: 'single',
+      options: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+      },
+    }), 
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+      },
     }),
     EventEmitterModule.forRoot(),
     ThrottlerModule.forRoot({
@@ -48,13 +54,11 @@ import { RedisModule } from './redis/redis.module';
         ...configService.get('database'),
       }),
     }),
-    CacheModule.registerAsync({
-      imports: [RedisModule],
-      inject: ['REDIS_CLIENT'],
-      useFactory: async (redisClient: any) => ({
-        store: 'redis',
-        redisInstance: redisClient,
-      }),
+    CacheModule.register({
+      isGlobal: true, 
+      store: redisStore, 
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379', 10),
     }),
     LoggingModule,
     ProductsModule,
