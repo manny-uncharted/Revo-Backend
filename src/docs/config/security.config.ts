@@ -1,6 +1,5 @@
 import { ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import * as crypto from 'crypto';
 export const securityConfig = (configService: ConfigService) => {
   return ThrottlerModule.forRoot({
     throttlers: [

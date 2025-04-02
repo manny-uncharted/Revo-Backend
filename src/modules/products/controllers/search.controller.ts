@@ -59,12 +59,9 @@ export class SearchController {
       this.logger.log(`Cache miss for key: ${cacheKey}, storing result`);
       return result;
 
-    } catch (cacheError) {
-      this.logger.warn(
-        `Failed to set cache for key: ${cacheKey}, reason: ${cacheError.message}`
-      );
+    } catch (error) {
+      this.logger.error(`Error processing search request: ${error.message}`, error.stack);
     }
-
   }
 
   private logSearchAnalytics(search?: SearchDto, filter?: FilterDto): void {
