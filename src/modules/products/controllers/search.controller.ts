@@ -61,6 +61,10 @@ export class SearchController {
 
     } catch (error) {
       this.logger.error(`Error processing search request: ${error.message}`, error.stack);
+          if (error instanceof BadRequestException) {
+              throw error; // Re-throw BadRequestException for validation errors
+            }
+            throw new Error(`Failed to process search: ${error.message}`);
     }
   }
 
