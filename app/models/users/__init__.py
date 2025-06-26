@@ -6,7 +6,6 @@ TODO: Contributors should implement:
 - UserProfile for additional user data
 - UserPreferences for app settings
 
-See CONTRIBUTING.md Issue #1 and #3 for details.
 """
 
 # TODO: Implement user models
@@ -15,4 +14,4 @@ See CONTRIBUTING.md Issue #1 and #3 for details.
 
 __all__ = [
     # TODO: Add user model exports as they are implemented
-] 
+]

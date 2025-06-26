@@ -7,7 +7,6 @@ TODO: Contributors should implement REST endpoints for:
 - File upload endpoints for product images
 - Webhook endpoints for external integrations
 
-See CONTRIBUTING.md Issue #10 for details.
 """
 
 # TODO: Import API routers as they are implemented
@@ -16,4 +15,4 @@ See CONTRIBUTING.md Issue #10 for details.
 
 __all__ = [
     # TODO: Add API router exports as they are implemented
-] 
+]

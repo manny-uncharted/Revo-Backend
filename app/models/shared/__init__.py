@@ -7,7 +7,6 @@ TODO: Contributors should implement:
 - Notification for system notifications
 - Media for handling product images and farm photos
 
-See CONTRIBUTING.md Issue #6 and #14 for details.
 """
 
 # TODO: Implement shared models
@@ -16,4 +15,4 @@ See CONTRIBUTING.md Issue #6 and #14 for details.
 
 __all__ = [
     # TODO: Add shared model exports as they are implemented
-] 
+]

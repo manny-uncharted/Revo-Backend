@@ -8,7 +8,6 @@ TODO: Contributors should implement DTOs/schemas for:
 - Order processing
 - API request/response models
 
-See CONTRIBUTING.md for related issues.
 """
 
 # TODO: Import schemas as they are implemented
@@ -18,4 +17,4 @@ See CONTRIBUTING.md for related issues.
 
 __all__ = [
     # TODO: Add schema exports as they are implemented
-] 
+]

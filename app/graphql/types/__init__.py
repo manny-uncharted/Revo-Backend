@@ -8,7 +8,6 @@ TODO: Contributors should implement GraphQL types for:
 - Order and transaction types
 - Search and filter input types
 
-See CONTRIBUTING.md Issue #8 for details.
 """
 
 # TODO: Import GraphQL types as they are implemented
@@ -18,4 +17,4 @@ See CONTRIBUTING.md Issue #8 for details.
 
 __all__ = [
     # TODO: Add GraphQL type exports as they are implemented
-] 
+]

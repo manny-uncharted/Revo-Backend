@@ -7,7 +7,6 @@ TODO: Contributors should implement:
 - FarmCertification for organic/sustainable certifications
 - FarmLocation for detailed geographic data
 
-See CONTRIBUTING.md Issue #2 and #3 for details.
 """
 
 # TODO: Implement farmer models
@@ -16,4 +15,4 @@ See CONTRIBUTING.md Issue #2 and #3 for details.
 
 __all__ = [
     # TODO: Add farmer model exports as they are implemented
-] 
+]

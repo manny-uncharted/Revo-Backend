@@ -2,7 +2,6 @@
 FastAPI application for Farmers Marketplace - TEMPLATE.
 
 This is a basic setup that provides the foundation for the marketplace.
-Contributors should implement features following the issues in CONTRIBUTING.md
 
 TODO: Expand this application with:
 - Authentication middleware
@@ -13,6 +12,7 @@ TODO: Expand this application with:
 - Logging setup
 """
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
@@ -65,7 +65,7 @@ async def root():
         "description": "Connecting agricultural producers with consumers",
         "docs": "/docs",
         "graphql": "/graphql",
-        "status": "ready_for_contributors"
+        "status": "ready_for_contributors",
     }
 
 
@@ -75,4 +75,4 @@ async def root():
 # app.include_router(mobile_router, prefix="/mobile", tags=["mobile"])
 
 # TODO: Add exception handlers, middleware, and additional configuration
-# See CONTRIBUTING.md for specific implementation tasks 
+# See CONTRIBUTING.md for specific implementation tasks

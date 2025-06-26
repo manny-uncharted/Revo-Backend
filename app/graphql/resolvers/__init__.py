@@ -8,7 +8,6 @@ TODO: Contributors should implement resolvers for:
 - Order processing
 - Search and filtering functionality
 
-See CONTRIBUTING.md Issue #7 for details.
 """
 
 # TODO: Import GraphQL resolvers as they are implemented
@@ -18,4 +17,4 @@ See CONTRIBUTING.md Issue #7 for details.
 
 __all__ = [
     # TODO: Add resolver exports as they are implemented
-] 
+]

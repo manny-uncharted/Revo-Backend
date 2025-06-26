@@ -3,12 +3,12 @@ SQLAlchemy models for Farmers Marketplace - Modular Organization.
 
 This module organizes models by domain:
 - users: User authentication and profiles
-- farmers: Agricultural producer entities  
+- farmers: Agricultural producer entities
 - products: Agricultural product catalog
 - orders: Marketplace transactions
 - shared: Common models used across domains
 
-TODO: Contributors should implement models following the issues in CONTRIBUTING.md
+TODO: Contributors should implement models.
 """
 
 # Base model for all entities
@@ -25,4 +25,4 @@ from .base import BaseModel
 __all__ = [
     "BaseModel",
     # TODO: Add model exports as they are implemented
-] 
+]

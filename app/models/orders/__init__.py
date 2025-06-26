@@ -8,7 +8,6 @@ TODO: Contributors should implement:
 - Shipping for delivery information
 - OrderStatus for tracking order progress
 
-See CONTRIBUTING.md Issue #5 for details.
 """
 
 # TODO: Implement order models
@@ -17,4 +16,4 @@ See CONTRIBUTING.md Issue #5 for details.
 
 __all__ = [
     # TODO: Add order model exports as they are implemented
-] 
+]

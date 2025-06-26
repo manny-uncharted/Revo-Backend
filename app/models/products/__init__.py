@@ -8,7 +8,6 @@ TODO: Contributors should implement:
 - ProductImage for product photos
 - ProductVariant for different sizes/qualities
 
-See CONTRIBUTING.md Issue #4 for details.
 """
 
 # TODO: Implement product models
@@ -17,4 +16,4 @@ See CONTRIBUTING.md Issue #4 for details.
 
 __all__ = [
     # TODO: Add product model exports as they are implemented
-] 
+]

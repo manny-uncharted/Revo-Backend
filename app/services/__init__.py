@@ -9,7 +9,6 @@ TODO: Contributors should implement services for:
 - Search and filtering operations
 - Notification services
 
-See CONTRIBUTING.md for related issues.
 """
 
 # TODO: Import services as they are implemented
@@ -19,4 +18,4 @@ See CONTRIBUTING.md for related issues.
 
 __all__ = [
     # TODO: Add service exports as they are implemented
-] 
+]

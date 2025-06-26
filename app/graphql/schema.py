@@ -1,20 +1,18 @@
 """
 GraphQL schema for Farmers Marketplace - TEMPLATE.
 
-TODO: Contributors should implement the complete GraphQL schema following the issues in CONTRIBUTING.md
+TODO: Contributors should implement the complete GraphQL schema.
 
 This is a minimal schema that needs to be expanded with:
 - User authentication mutations and queries
 - Farmer profile management
-- Product catalog operations  
+- Product catalog operations
 - Order processing
 - Search and filtering functionality
 
-See CONTRIBUTING.md Issues #7 and #8 for details.
 """
 import strawberry
 from strawberry.fastapi import GraphQLRouter
-
 
 # TODO: Import resolvers as they are implemented
 # from app.graphql.resolvers.user_resolver import UserResolver
@@ -25,34 +23,34 @@ from strawberry.fastapi import GraphQLRouter
 class Query:
     """
     GraphQL queries - TEMPLATE.
-    
+
     TODO: Add queries for:
     - users, farmers, products, orders
     - search and filtering operations
     - marketplace analytics
     """
-    
+
     @strawberry.field
     def hello(self) -> str:
         """Basic hello query - remove when real queries are implemented."""
         return "Hello Farmers Marketplace! 🌾"
 
 
-@strawberry.type  
+@strawberry.type
 class Mutation:
     """
     GraphQL mutations - TEMPLATE.
-    
+
     TODO: Add mutations for:
     - user registration and authentication
     - farmer profile creation
     - product management
     - order processing
     """
-    
+
     @strawberry.field
     def placeholder(self) -> str:
-        """Placeholder mutation - remove when real mutations are implemented."""
+        """Placeholder mutation - remove when implemented."""
         return "Placeholder mutation"
 
 
@@ -60,4 +58,4 @@ class Mutation:
 schema = strawberry.Schema(query=Query, mutation=Mutation)
 
 # Create GraphQL router for FastAPI
-graphql_router = GraphQLRouter(schema) 
+graphql_router = GraphQLRouter(schema)
