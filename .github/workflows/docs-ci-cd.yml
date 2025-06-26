@@ -1,4 +1,4 @@
-name: CI/CD for Documentation
+name: CI/CD Pipeline
 
 # Trigger the workflow on push or pull request to the main branch
 on:
@@ -10,39 +10,118 @@ on:
       - main
 
 jobs:
-  validate-and-deploy-docs:
+  test-and-validate:
     runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       # Step 1: Checkout the repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Set up Node.js environment
+      # Step 2: Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e ".[dev]"
+
+      # Step 4: Run code quality checks
+      - name: Run linting
+        run: |
+          flake8 app tests
+          black --check app tests
+          isort --check-only app tests
+
+      # Step 5: Run type checking
+      - name: Run type checking
+        run: mypy app
+
+      # Step 6: Run tests with coverage
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://testuser:testpass@localhost:5432/testdb
+          ENVIRONMENT: testing
+        run: |
+          pytest tests/ -v --cov=app --cov-report=xml --cov-report=term
+
+      # Step 7: Upload coverage to Codecov (optional)
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+  generate-and-deploy-docs:
+    runs-on: ubuntu-latest
+    needs: test-and-validate
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 4: Generate OpenAPI specification
+      - name: Generate OpenAPI spec
+        run: |
+          python -c "
+          import json
+          from app.main import app
+          with open('openapi.json', 'w') as f:
+              json.dump(app.openapi(), f, indent=2)
+          "
+
+      # Step 5: Set up Node.js for Redoc
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Use Node.js 20 to avoid punycode deprecation warning
-          cache: 'npm' # Cache npm dependencies to speed up the workflow
+          node-version: '20'
 
-      # Step 3: Install project dependencies
-      - name: Install dependencies
-        run: npm install
-
-      # Step 4: Run the validate-docs.ts script to validate the documentation
-      - name: Validate documentation
-        run: npx ts-node src/docs/scripts/validate-docs.ts
-
-      # Step 5: Generate HTML documentation using Redoc (only on main branch)
+      # Step 6: Generate HTML documentation using Redoc
       - name: Generate HTML documentation
-        if: github.ref == 'refs/heads/main'
         run: |
           npm install -g redoc-cli
-          redoc-cli bundle src/docs/openapi-spec.json -o docs/index.html
+          mkdir -p docs
+          redoc-cli bundle openapi.json -o docs/index.html
+          cp openapi.json docs/
 
-      # Step 6: Deploy the generated documentation to GitHub Pages (only on main branch)
+      # Step 7: Deploy the generated documentation to GitHub Pages
       - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

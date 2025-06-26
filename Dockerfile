@@ -1,23 +1,35 @@
-# Usa una imagen base de Node.js
-FROM node:16-alpine
+# Use Python 3.11 slim image for better performance
+FROM python:3.11-slim
 
-# Establece el directorio de trabajo dentro del contenedor
-WORKDIR /usr/src/app
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 
-# Copia los archivos de package.json y package-lock.json
-COPY package*.json ./
+# Set work directory
+WORKDIR /app
 
-# Instala las dependencias
-RUN npm install
+# Install system dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instala el CLI de NestJS globalmente
-RUN npm install -g @nestjs/cli
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-# Copia el resto del proyecto al contenedor
+# Copy project
 COPY . .
 
-# Expone el puerto de la aplicación
-EXPOSE 3000
+# Create non-root user
+RUN adduser --disabled-password --gecos '' appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 
-# Comando por defecto para iniciar la aplicación
-CMD ["npm", "run", "start:dev"]
+# Expose port
+EXPOSE 8000
+
+# Run the application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

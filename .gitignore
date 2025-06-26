@@ -1,23 +1,56 @@
-# compiled output
-/dist
-/node_modules
-/build
+# Python compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
 
 # Logs
-logs
+logs/
 *.log
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
+pip-log.txt
+pip-delete-this-directory.txt
 
 # OS
 .DS_Store
 
-# Tests
-/coverage
-/.nyc_output
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
 
 # IDEs and editors
 /.idea
@@ -46,29 +79,37 @@ lerna-debug.log*
 .temp
 .tmp
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Database
+*.db
+*.sqlite3
+
+# Alembic
+alembic/versions/*.py
+!alembic/versions/.gitkeep
 
 # Secrets and sensitive data
-config/docker/secrets/
 *.pem
 *.key
 *.crt
 *.env
-!config/docker/env/*/.env.example
-
-# Vault data
-vault_data/
-vault_config/
+!.env.example
 
 # SSL certificates
 *.cer
 *.der
 *.p12
 *.pfx
+
+# FastAPI generated files
+openapi.json
+
+# Docker
+.dockerignore

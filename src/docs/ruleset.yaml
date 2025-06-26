@@ -1,3 +1,0 @@
-# src/docs/ruleset.yaml
-extends:
-  - spectral:oas

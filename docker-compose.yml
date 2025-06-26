@@ -7,17 +7,18 @@ services:
       dockerfile: Dockerfile
     container_name: farmers_marketplace_api
     ports:
-      - '3000:3000'
+      - '8000:8000'
     environment:
-      - NODE_ENV=development
+      - ENVIRONMENT=development
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=myuser
       - POSTGRES_PASSWORD=mypassword
       - POSTGRES_DB=mydatabase
+      - DATABASE_URL=postgresql+asyncpg://myuser:mypassword@postgres:5432/mydatabase
     volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
+      - .:/app
+      - /app/__pycache__
     depends_on:
       - postgres
     networks:
