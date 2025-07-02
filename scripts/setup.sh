@@ -7,7 +7,7 @@ echo "🔧 Setting up Revo Backend..."
 # Create virtual environment if it doesn't exist
 if [ ! -d "venv" ]; then
     echo "🐍 Creating virtual environment..."
-    python -m venv venv
+    python3.11 -m venv venv
 fi
 
 # Activate virtual environment
@@ -16,15 +16,15 @@ source venv/bin/activate
 
 # Upgrade pip
 echo "📦 Upgrading pip..."
-pip install --upgrade pip
+python3.11 -m pip install --upgrade pip
 
 # Install dependencies
 echo "📚 Installing dependencies..."
-pip install -r requirements.txt
+python3.11 -m pip install -r requirements.txt
 
 # Install development dependencies
 echo "🛠️  Installing development dependencies..."
-pip install -e ".[dev]"
+python3.11 -m pip install -e ".[dev]"
 
 # Create .env file if it doesn't exist
 if [ ! -f .env ]; then
