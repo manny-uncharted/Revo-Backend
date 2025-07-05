@@ -2,11 +2,11 @@
 Authentication service for user registration, login, and password management.
 """
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional, Union, cast
+from typing import Dict, Optional, Union
 
+import bcrypt
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,16 +19,19 @@ class AuthService:
     """Authentication service for user management."""
 
     def __init__(self) -> None:
-        self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         self.settings = get_settings()
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a plain password against its hash."""
-        return cast(bool, self.pwd_context.verify(plain_password, hashed_password))
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+        )
 
     def get_password_hash(self, password: str) -> str:
         """Hash a plain password."""
-        return cast(str, self.pwd_context.hash(password))
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+        return hashed.decode("utf-8")
 
     async def get_user_by_email(
         self, db: AsyncSession, email: Optional[str]
@@ -46,8 +49,7 @@ class AuthService:
         user = await self.get_user_by_email(db, email)
         if not user:
             return None
-        hashed_password = cast(str, user.password_hash)
-        if not self.verify_password(password, hashed_password):
+        if not self.verify_password(password, user.password_hash):
             return None
         return user
 
@@ -87,10 +89,10 @@ class AuthService:
             expire = datetime.now(timezone.utc) + timedelta(minutes=15)
 
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(
+        encoded_jwt: str = jwt.encode(
             to_encode, self.settings.secret_key, algorithm=self.settings.algorithm
         )
-        return cast(str, encoded_jwt)
+        return encoded_jwt  # jwt.encode ya retorna str, no necesitamos cast
 
     async def get_current_user_from_token(self, db: AsyncSession, token: str) -> User:
         """Get current user from JWT token."""

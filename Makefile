@@ -32,7 +32,7 @@ test:
 
 lint:
 	@source venv/bin/activate && flake8 app tests
-	@source venv/bin/activate && mypy app
+	@source venv/bin/activate && mypy --config-file pyproject.toml --strict app
 
 format:
 	@source venv/bin/activate && black app tests
