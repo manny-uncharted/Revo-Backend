@@ -89,7 +89,7 @@ class AuthService:
             expire = datetime.now(timezone.utc) + timedelta(minutes=15)
 
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(
+        encoded_jwt: str = jwt.encode(
             to_encode, self.settings.secret_key, algorithm=self.settings.algorithm
         )
         return encoded_jwt  # jwt.encode ya retorna str, no necesitamos cast
