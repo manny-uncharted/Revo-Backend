@@ -3,7 +3,6 @@ User model for authentication and user management.
 """
 import enum
 import uuid
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import String
