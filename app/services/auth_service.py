@@ -28,7 +28,9 @@ class AuthService:
 
     def get_password_hash(self, password: str) -> str:
         """Hash a plain password."""
-        return cast(str, self.pwd_context.hash(password))
+        # pwd_context.hash() returns str but mypy doesn't know that
+        hashed: str = self.pwd_context.hash(password)
+        return hashed
 
     async def get_user_by_email(
         self, db: AsyncSession, email: Optional[str]
@@ -46,8 +48,7 @@ class AuthService:
         user = await self.get_user_by_email(db, email)
         if not user:
             return None
-        hashed_password = cast(str, user.password_hash)
-        if not self.verify_password(password, hashed_password):
+        if not self.verify_password(password, user.password_hash):
             return None
         return user
 

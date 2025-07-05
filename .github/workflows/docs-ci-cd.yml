@@ -46,6 +46,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -e ".[dev]"
+          pip install "mypy==1.7.1"  # Ensure specific version
 
       # Step 4: Run code quality checks
       - name: Run linting
@@ -56,7 +57,9 @@ jobs:
 
       # Step 5: Run type checking
       - name: Run type checking
-        run: mypy app
+        run: |
+          echo "Running mypy with config from pyproject.toml..."
+          mypy --config-file pyproject.toml --strict app
 
       # Step 6: Run tests with coverage
       - name: Run tests
