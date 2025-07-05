@@ -25,9 +25,7 @@ class User(BaseModel):
     __tablename__ = "users"
 
     # Override id to use UUID
-    id: Mapped[UUID] = mapped_column(
-        primary_key=True, default=uuid.uuid4, index=True
-    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid.uuid4, index=True)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
     user_type: Mapped[UserType] = mapped_column(nullable=False)
