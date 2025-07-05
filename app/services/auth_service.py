@@ -2,7 +2,7 @@
 Authentication service for user registration, login, and password management.
 """
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional, Union, cast
+from typing import Dict, Optional, Union
 
 import bcrypt
 from fastapi import HTTPException, status
@@ -24,15 +24,14 @@ class AuthService:
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a plain password against its hash."""
         return bcrypt.checkpw(
-            plain_password.encode('utf-8'),
-            hashed_password.encode('utf-8')
+            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
         )
 
     def get_password_hash(self, password: str) -> str:
         """Hash a plain password."""
         salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-        return hashed.decode('utf-8')
+        hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+        return hashed.decode("utf-8")
 
     async def get_user_by_email(
         self, db: AsyncSession, email: Optional[str]
