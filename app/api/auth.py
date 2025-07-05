@@ -2,7 +2,7 @@
 Authentication API endpoints.
 """
 from datetime import timedelta
-from typing import Annotated
+from typing import Annotated, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -17,13 +17,16 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
 @router.post("/register", response_model=UserResponse)
-async def register(user_create: UserCreate, db: AsyncSession = Depends(get_db)):
+async def register(
+    user_create: UserCreate, db: AsyncSession = Depends(get_db)
+) -> UserResponse:
     """Register a new user."""
-    return await auth_service.create_user(db, user_create)
+    user = await auth_service.create_user(db, user_create)
+    return UserResponse.model_validate(user)
 
 
 @router.post("/login", response_model=Token)
-async def login(user_login: UserLogin, db: AsyncSession = Depends(get_db)):
+async def login(user_login: UserLogin, db: AsyncSession = Depends(get_db)) -> Token:
     """Login user and return access token."""
     user = await auth_service.authenticate_user(
         db, user_login.email, user_login.password
@@ -40,13 +43,14 @@ async def login(user_login: UserLogin, db: AsyncSession = Depends(get_db)):
     access_token = auth_service.create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    token_data: Dict[str, str] = {"access_token": access_token, "token_type": "bearer"}
+    return Token.model_validate(token_data)
 
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)
-):
+) -> Token:
     """OAuth2 compatible token endpoint."""
     user = await auth_service.authenticate_user(
         db, form_data.username, form_data.password
@@ -64,12 +68,14 @@ async def login_for_access_token(
     access_token = auth_service.create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    token_data: Dict[str, str] = {"access_token": access_token, "token_type": "bearer"}
+    return Token.model_validate(token_data)
 
 
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(
     token: Annotated[str, Depends(oauth2_scheme)], db: AsyncSession = Depends(get_db)
-):
+) -> UserResponse:
     """Get current user information."""
-    return await auth_service.get_current_user_from_token(db, token)
+    user = await auth_service.get_current_user_from_token(db, token)
+    return UserResponse.model_validate(user)

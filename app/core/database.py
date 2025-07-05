@@ -4,7 +4,12 @@ Database connection and session management.
 from typing import AsyncGenerator, Optional
 
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import declarative_base
 
 from app.core.config import get_settings
@@ -13,11 +18,11 @@ from app.core.config import get_settings
 Base = declarative_base()
 
 # Global variables
-engine = None
+engine: Optional[AsyncEngine] = None
 SessionLocal: Optional[async_sessionmaker[AsyncSession]] = None
 
 
-async def init_db():
+async def init_db() -> None:
     """Initialize database connection."""
     global engine, SessionLocal
 
@@ -51,6 +56,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-def get_engine():
+def get_engine() -> Optional[AsyncEngine]:
     """Get database engine."""
     return engine

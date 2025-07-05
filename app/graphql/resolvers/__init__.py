@@ -15,6 +15,8 @@ TODO: Contributors should implement resolvers for:
 # from .farmer_resolver import FarmerResolver
 # from .product_resolver import ProductResolver
 
-__all__ = [
+from typing import List
+
+__all__: List[str] = [
     # TODO: Add resolver exports as they are implemented
 ]

@@ -13,6 +13,8 @@ TODO: Contributors should implement:
 # from .farmer import Farmer
 # from .verification import FarmerVerification
 
-__all__ = [
+from typing import List
+
+__all__: List[str] = [
     # TODO: Add farmer model exports as they are implemented
 ]

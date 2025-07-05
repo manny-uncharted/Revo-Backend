@@ -14,6 +14,8 @@ TODO: Contributors should implement:
 # from .order import Order, OrderItem
 # from .payment import Payment
 
-__all__ = [
+from typing import List
+
+__all__: List[str] = [
     # TODO: Add order model exports as they are implemented
 ]
