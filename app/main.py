@@ -17,6 +17,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
+from app.api.auth import router as auth_router
 from app.core.config import get_settings
 from app.core.database import init_db
 from app.graphql.schema import graphql_router
@@ -36,7 +37,7 @@ async def lifespan(app: FastAPI):
 settings = get_settings()
 app = FastAPI(
     title="Farmers Marketplace API",
-    description="Backend API for connecting agricultural producers with consumers",
+    description="Backend API for connecting agricultural producers with consumers",  # noqa: E501
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -52,8 +53,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include GraphQL router
+# Include routers
 app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
+app.include_router(auth_router, prefix="/auth", tags=["authentication"])
 
 
 # Basic root endpoint

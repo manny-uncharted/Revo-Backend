@@ -42,3 +42,9 @@ isort==5.13.2
 flake8==6.1.0
 mypy==1.7.1
 pre-commit==3.6.0 
+
+# Authentication
+
+python-jose==3.3.0
+passlib[bcrypt]==1.7.4
+

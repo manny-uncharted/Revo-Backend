@@ -3,6 +3,7 @@ Pytest configuration and fixtures - TEMPLATE.
 TODO: Expand test fixtures based on business requirements.
 """
 import asyncio
+
 import pytest
 from httpx import AsyncClient
 
@@ -38,9 +39,7 @@ async def db_session(initialize_database):
 @pytest.fixture
 async def client():
     """Get test client."""
-    async with AsyncClient(
-        app=app, base_url="http://testserver"
-    ) as async_client:
+    async with AsyncClient(app=app, base_url="http://testserver") as async_client:
         yield async_client
 
 
