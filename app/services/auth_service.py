@@ -2,7 +2,7 @@
 Authentication service for user registration, login, and password management.
 """
 from datetime import datetime, timedelta, timezone
-from typing import Optional, cast
+from typing import Dict, Optional, Union, cast
 
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
@@ -18,17 +18,17 @@ from app.schemas.user import TokenData, UserCreate
 class AuthService:
     """Authentication service for user management."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         self.settings = get_settings()
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a plain password against its hash."""
-        return self.pwd_context.verify(plain_password, hashed_password)
+        return cast(bool, self.pwd_context.verify(plain_password, hashed_password))
 
     def get_password_hash(self, password: str) -> str:
         """Hash a plain password."""
-        return self.pwd_context.hash(password)
+        return cast(str, self.pwd_context.hash(password))
 
     async def get_user_by_email(
         self, db: AsyncSession, email: Optional[str]
@@ -77,10 +77,10 @@ class AuthService:
         return db_user
 
     def create_access_token(
-        self, data: dict, expires_delta: Optional[timedelta]
+        self, data: Dict[str, str], expires_delta: Optional[timedelta]
     ) -> str:
         """Create JWT access token."""
-        to_encode = data.copy()
+        to_encode: Dict[str, Union[str, datetime]] = dict(data)
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
@@ -90,7 +90,7 @@ class AuthService:
         encoded_jwt = jwt.encode(
             to_encode, self.settings.secret_key, algorithm=self.settings.algorithm
         )
-        return encoded_jwt
+        return cast(str, encoded_jwt)
 
     async def get_current_user_from_token(self, db: AsyncSession, token: str) -> User:
         """Get current user from JWT token."""

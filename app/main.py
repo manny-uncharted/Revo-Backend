@@ -12,6 +12,7 @@ TODO: Expand this application with:
 - Logging setup
 """
 from contextlib import asynccontextmanager
+from typing import AsyncGenerator, Dict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,7 +25,7 @@ from app.graphql.schema import graphql_router
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
     logger.info("Starting up...")
     await init_db()
@@ -60,7 +61,7 @@ app.include_router(auth_router, prefix="/auth", tags=["authentication"])
 
 # Basic root endpoint
 @app.get("/", tags=["root"])
-async def root():
+async def root() -> Dict[str, str]:
     """Root endpoint."""
     return {
         "message": "🌾 Farmers Marketplace API",
