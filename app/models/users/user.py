@@ -1,39 +1,50 @@
 """
 User model for authentication and user management.
 """
-import enum
-import uuid
-from typing import Any
-from uuid import UUID
+from datetime import datetime
+from enum import Enum
+from typing import Optional
 
-from sqlalchemy import String
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import BaseModel
+from app.models.base import Base
 
 
-class UserType(enum.Enum):
+class UserType(str, Enum):
     """User type enumeration."""
-
     FARMER = "FARMER"
-    BUYER = "BUYER"
+    CONSUMER = "CONSUMER"
     ADMIN = "ADMIN"
 
 
-class User(BaseModel):
-    """User model for authentication."""
-
+class User(Base):
+    """User model for authentication and user management."""
+    
     __tablename__ = "users"
-
-    # Override id to use UUID
-    id: Mapped[UUID] = mapped_column(
-        primary_key=True, default=uuid.uuid4, index=True
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    username: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    user_type: Mapped[UserType] = mapped_column(String(20), nullable=False, default=UserType.CONSUMER)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        server_default=func.now(),
+        nullable=False
     )
-    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String, nullable=False)
-    user_type: Mapped[UserType] = mapped_column(nullable=False)
-    is_active: Mapped[bool] = mapped_column(default=True)
-    is_verified: Mapped[bool] = mapped_column(default=False)
-
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
+    
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, email={self.email}, user_type={self.user_type})>"
+        return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
