@@ -7,7 +7,7 @@ from typing import Optional
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 
 from app.models.base import Base
-
+from enum import Enum
 
 class User(Base):
     """User model for authentication and user management."""
