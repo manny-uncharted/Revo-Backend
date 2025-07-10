@@ -12,12 +12,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from alembic import context
 
 from app.core.config import get_settings
-from app.core.database import Base
+from app.models.base import Base
+from app.models import User  # noqa: F401
 
 # TODO: Import all models here as they are implemented to ensure they are registered with SQLAlchemy
 # Examples:
-# from app.models import User, Farmer, Product, Order, Location  # noqa
-# 
+# from app.models import Farmer, Product, Order, Location  # noqa
+
+
 # Contributors should add imports when implementing models following CONTRIBUTING.md issues
 
 # this is the Alembic Config object, which provides access to the values within the .ini file in use.

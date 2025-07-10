@@ -2,7 +2,6 @@
 Pydantic schemas for Farmers Marketplace.
 
 TODO: Contributors should implement DTOs/schemas for:
-- User authentication and registration
 - Farmer profile management
 - Product catalog operations
 - Order processing
@@ -11,10 +10,17 @@ TODO: Contributors should implement DTOs/schemas for:
 """
 
 # TODO: Import schemas as they are implemented
-# from .user import UserCreate, UserResponse
 # from .farmer import FarmerCreate, FarmerResponse
 # from .product import ProductCreate, ProductResponse
 
+from .user import Token, TokenData, UserCreate, UserInDB, UserLogin, UserResponse
+
 __all__ = [
     # TODO: Add schema exports as they are implemented
+    "UserCreate",
+    "UserResponse",
+    "UserLogin",
+    "Token",
+    "TokenData",
+    "UserInDB",
 ]

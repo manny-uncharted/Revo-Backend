@@ -14,6 +14,8 @@ TODO: Contributors should implement:
 # from .product import Product
 # from .category import ProductCategory
 
-__all__ = [
+from typing import List
+
+__all__: List[str] = [
     # TODO: Add product model exports as they are implemented
 ]

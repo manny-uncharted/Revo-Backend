@@ -13,6 +13,8 @@ TODO: Contributors should implement:
 # from .location import Location
 # from .review import Review
 
-__all__ = [
+from typing import List
+
+__all__: List[str] = [
     # TODO: Add shared model exports as they are implemented
 ]
