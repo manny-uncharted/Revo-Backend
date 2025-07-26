@@ -9,9 +9,9 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import text
 
-from app.core.database import get_db, init_db, get_engine
-from app.models.base import Base
+from app.core.database import get_db, get_engine, init_db
 from app.main import app
+from app.models.base import Base
 
 
 @pytest.fixture(scope="session")
