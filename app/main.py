@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from app.api.auth import router as auth_router
+from app.api.users import router as users_router
 from app.core.config import get_settings
 from app.core.database import init_db
 from app.graphql.schema import graphql_router
@@ -57,6 +58,7 @@ app.add_middleware(
 # Include routers
 app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
 app.include_router(auth_router, prefix="/auth", tags=["authentication"])
+app.include_router(users_router, prefix="/api/users", tags=["users"])
 
 
 # Basic root endpoint
