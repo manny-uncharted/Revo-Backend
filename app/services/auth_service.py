@@ -1,6 +1,7 @@
 """
 Authentication service for user registration, login, and password management.
 """
+
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional, Union
 

@@ -11,6 +11,7 @@ TODO: Expand this application with:
 - CORS configuration
 - Logging setup
 """
+
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Dict
 

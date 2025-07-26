@@ -2,12 +2,15 @@
 Pytest configuration and fixtures - TEMPLATE.
 TODO: Expand test fixtures based on business requirements.
 """
+
 import asyncio
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import text
 
-from app.core.database import get_db, init_db
+from app.core.database import get_db, init_db, get_engine
+from app.models.base import Base
 from app.main import app
 
 
@@ -21,11 +24,23 @@ def event_loop():
 
 @pytest.fixture(scope="session")
 async def initialize_database():
-    """Initialize test database."""
-    # TODO: Customize for specific testing needs.
+    """Initialize test database and create tables."""
+    # Initialize database connection
     await init_db()
+    
+    # Get engine and create all tables
+    engine = get_engine()
+    if engine:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    
     yield
-    # TODO: Add cleanup if needed
+    
+    # Cleanup: drop all tables
+    if engine:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        await engine.dispose()
 
 
 @pytest.fixture
@@ -33,6 +48,9 @@ async def db_session(initialize_database):
     """Get database session for testing."""
     async for session in get_db():
         yield session
+        # Clean up after each test by truncating the users table
+        await session.execute(text("TRUNCATE TABLE users RESTART IDENTITY CASCADE"))
+        await session.commit()
         break
 
 

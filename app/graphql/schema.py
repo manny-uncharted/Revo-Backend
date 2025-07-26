@@ -11,6 +11,7 @@ This is a minimal schema that needs to be expanded with:
 - Search and filtering functionality
 
 """
+
 from typing import Any
 
 import strawberry
