@@ -22,7 +22,9 @@ class Settings(BaseSettings):
     postgres_user: str = Field(default="myuser")
     postgres_password: str = Field(default="mypassword")
     postgres_db: str = Field(default="mydatabase")
-    database_url: str = Field(default="postgresql+asyncpg://myuser:mypassword@localhost:5432/mydatabase")
+    database_url: str = Field(
+        default="postgresql+asyncpg://myuser:mypassword@localhost:5432/mydatabase"
+    )
 
     # Security
     secret_key: str = "your-secret-key-change-in-production"

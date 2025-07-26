@@ -27,15 +27,15 @@ async def initialize_database():
     """Initialize test database and create tables."""
     # Initialize database connection
     await init_db()
-    
+
     # Get engine and create all tables
     engine = get_engine()
     if engine:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-    
+
     yield
-    
+
     # Cleanup: drop all tables
     if engine:
         async with engine.begin() as conn:
