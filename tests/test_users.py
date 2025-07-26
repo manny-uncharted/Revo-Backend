@@ -2,10 +2,8 @@
 Comprehensive test suite for user management API endpoints.
 """
 
-import uuid
 from datetime import datetime
 
-import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
