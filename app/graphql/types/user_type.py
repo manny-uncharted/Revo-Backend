@@ -17,7 +17,7 @@ UserType = strawberry.enum(UserTypeEnum)
 @strawberry.type
 class User:
     """GraphQL User type with all fields."""
-    
+
     id: UUID
     email: str
     user_type: UserType
@@ -43,7 +43,7 @@ class User:
 @strawberry.input
 class UserInput:
     """GraphQL input type for user creation."""
-    
+
     email: str
     password: str
     user_type: UserType
@@ -52,6 +52,6 @@ class UserInput:
 @strawberry.input
 class UserUpdateInput:
     """GraphQL input type for user updates."""
-    
+
     email: Optional[str] = None
-    user_type: Optional[UserType] = None 
+    user_type: Optional[UserType] = None

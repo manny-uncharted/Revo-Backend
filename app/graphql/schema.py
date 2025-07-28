@@ -2,15 +2,13 @@
 GraphQL schema for Farmers Marketplace.
 """
 
-from typing import Any, Optional
-from uuid import UUID
+from typing import Any
 
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 from strawberry.schema.schema import Schema
 
 from app.graphql.resolvers.user_resolver import UserMutation, UserQuery
-from app.graphql.types.user_type import User
 
 
 @strawberry.type
