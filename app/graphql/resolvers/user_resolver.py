@@ -6,7 +6,7 @@ from typing import Optional
 from uuid import UUID
 
 import strawberry
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from sqlalchemy import select
 
 from app.core.database import get_db
@@ -85,7 +85,7 @@ class UserMutation:
             except HTTPException as e:
                 # Convert HTTPException to Strawberry error
                 raise strawberry.GraphQLError(str(e.detail))
-            except Exception as e:
+            except Exception:
                 # Log unexpected errors but don't expose internal details
                 raise strawberry.GraphQLError("Failed to create user")
         raise RuntimeError("Database session not available")
@@ -112,7 +112,7 @@ class UserMutation:
             except HTTPException as e:
                 # Convert HTTPException to Strawberry error
                 raise strawberry.GraphQLError(str(e.detail))
-            except Exception as e:
+            except Exception:
                 # Log unexpected errors but don't expose internal details
                 raise strawberry.GraphQLError("Failed to delete user")
         return False
