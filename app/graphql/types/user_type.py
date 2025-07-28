@@ -3,12 +3,16 @@ User GraphQL types for Farmers Marketplace.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional, TYPE_CHECKING
 from uuid import UUID
 
 import strawberry
 
 from app.models.users.user import UserType as UserTypeEnum
+
+if TYPE_CHECKING:
+    from app.models.users.user import User as UserModel
+
 
 # Create GraphQL enum from the SQLAlchemy enum
 UserType = strawberry.enum(UserTypeEnum)
@@ -20,14 +24,14 @@ class User:
 
     id: UUID
     email: str
-    user_type: UserType
+    user_type: Any
     is_active: bool
     is_verified: bool
     created_at: datetime
     updated_at: datetime
 
     @classmethod
-    def from_model(cls, user_model) -> "User":
+    def from_model(cls, user_model: "UserModel") -> "User":
         """Convert SQLAlchemy User model to GraphQL User type."""
         return cls(
             id=user_model.id,
@@ -46,7 +50,7 @@ class UserInput:
 
     email: str
     password: str
-    user_type: UserType
+    user_type: Any
 
 
 @strawberry.input
@@ -54,4 +58,4 @@ class UserUpdateInput:
     """GraphQL input type for user updates."""
 
     email: Optional[str] = None
-    user_type: Optional[UserType] = None
+    user_type: Optional[Any] = None
