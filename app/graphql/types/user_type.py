@@ -3,7 +3,7 @@ User GraphQL types for Farmers Marketplace.
 """
 
 from datetime import datetime
-from typing import Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 from uuid import UUID
 
 import strawberry
