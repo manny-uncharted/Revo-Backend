@@ -11,7 +11,8 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.graphql.types.user_type import User, UserInput
-from app.models.users.user import User as UserModel, UserType as UserTypeEnum
+from app.models.users.user import User as UserModel
+from app.models.users.user import UserType as UserTypeEnum
 from app.services.auth_service import auth_service
 
 
