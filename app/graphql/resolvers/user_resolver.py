@@ -22,36 +22,30 @@ class UserQuery:
     @strawberry.field
     async def user(self, id: UUID) -> Optional[User]:
         """Get user by ID."""
-        async for db in get_db():
-            try:
-                query = select(UserModel).where(UserModel.id == id)
-                result = await db.execute(query)
-                user_model = result.scalar_one_or_none()
+        async with get_db() as db:
+            query = select(UserModel).where(UserModel.id == id)
+            result = await db.execute(query)
+            user_model = result.scalar_one_or_none()
 
-                if not user_model:
-                    return None
+            if not user_model:
+                return None
 
-                return User.from_model(user_model)
-            finally:
-                await db.close()
+            return User.from_model(user_model)
 
     @strawberry.field
     async def users(self, skip: int = 0, limit: int = 100) -> list[User]:
         """Get list of users with pagination."""
-        async for db in get_db():
-            try:
-                query = select(UserModel).offset(skip).limit(limit)
-                result = await db.execute(query)
-                user_models = result.scalars().all()
+        async with get_db() as db:
+            query = select(UserModel).offset(skip).limit(limit)
+            result = await db.execute(query)
+            user_models = result.scalars().all()
 
-                return [User.from_model(user) for user in user_models]
-            finally:
-                await db.close()
+            return [User.from_model(user) for user in user_models]
 
     @strawberry.field
     async def current_user(self, token: str) -> Optional[User]:
         """Get current authenticated user."""
-        async for db in get_db():
+        async with get_db() as db:
             try:
                 user_model = await auth_service.get_current_user_from_token(
                     db, token
@@ -59,8 +53,6 @@ class UserQuery:
                 return User.from_model(user_model)
             except HTTPException:
                 return None
-            finally:
-                await db.close()
 
 
 @strawberry.type
@@ -72,25 +64,22 @@ class UserMutation:
         """Create a new user."""
         from app.schemas.user import UserCreate
 
-        async for db in get_db():
-            try:
-                # Convert GraphQL input to Pydantic schema
-                user_create = UserCreate(
-                    email=user_input.email,
-                    password=user_input.password,
-                    user_type=user_input.user_type.value,
-                )
+        async with get_db() as db:
+            # Convert GraphQL input to Pydantic schema
+            user_create = UserCreate(
+                email=user_input.email,
+                password=user_input.password,
+                user_type=user_input.user_type.value,
+            )
 
-                # Create user using auth service
-                user_model = await auth_service.create_user(db, user_create)
-                return User.from_model(user_model)
-            finally:
-                await db.close()
+            # Create user using auth service
+            user_model = await auth_service.create_user(db, user_create)
+            return User.from_model(user_model)
 
     @strawberry.field
     async def delete_user(self, id: UUID, token: str) -> bool:
         """Delete a user (requires authentication)."""
-        async for db in get_db():
+        async with get_db() as db:
             try:
                 # Verify current user (authentication check)
                 await auth_service.get_current_user_from_token(db, token)
@@ -109,7 +98,12 @@ class UserMutation:
                 await db.delete(user)
                 await db.commit()
                 return True
-            except HTTPException:
-                return False
-            finally:
-                await db.close()
+            except HTTPException as e:
+                # Re-raise HTTP exceptions to maintain proper error context
+                raise e
+            except Exception as e:
+                # Log unexpected errors but don't expose internal details
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to delete user"
+                ) from e
