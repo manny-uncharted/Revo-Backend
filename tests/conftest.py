@@ -58,6 +58,7 @@ async def db_session(initialize_database):
 async def client():
     """Get test client."""
     from httpx import ASGITransport
+
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://testserver"
     ) as async_client:

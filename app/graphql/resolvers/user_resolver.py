@@ -47,9 +47,7 @@ class UserQuery:
         """Get current authenticated user."""
         async with get_db() as db:
             try:
-                user_model = await auth_service.get_current_user_from_token(
-                    db, token
-                )
+                user_model = await auth_service.get_current_user_from_token(db, token)
                 return User.from_model(user_model)
             except HTTPException:
                 return None
@@ -91,8 +89,7 @@ class UserMutation:
 
                 if not user:
                     raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="User not found"
+                        status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
                     )
 
                 await db.delete(user)
@@ -105,5 +102,5 @@ class UserMutation:
                 # Log unexpected errors but don't expose internal details
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Failed to delete user"
+                    detail="Failed to delete user",
                 ) from e

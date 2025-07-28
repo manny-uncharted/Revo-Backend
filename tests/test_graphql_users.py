@@ -17,19 +17,14 @@ class TestUserGraphQLQueries:
         }
         """
 
-        response = await client.post(
-            "/graphql",
-            json={"query": query}
-        )
+        response = await client.post("/graphql", json={"query": query})
 
         assert response.status_code == 200
         data = response.json()
         assert "errors" not in data
         assert data["data"]["hello"] == "Hello Farmers Marketplace! 🌾"
 
-    async def test_get_user_by_id(
-        self, client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_get_user_by_id(self, client: AsyncClient, db_session: AsyncSession):
         """Test getting user by ID via GraphQL."""
         # First create a user via REST API
         user_data = {
@@ -38,9 +33,7 @@ class TestUserGraphQLQueries:
             "user_type": "FARMER",
         }
 
-        rest_response = await client.post(
-            "/api/users/register", json=user_data
-        )
+        rest_response = await client.post("/api/users/register", json=user_data)
         assert rest_response.status_code == 201
         user_id = rest_response.json()["id"]
 
@@ -59,10 +52,7 @@ class TestUserGraphQLQueries:
         }}
         """
 
-        response = await client.post(
-            "/graphql",
-            json={"query": query}
-        )
+        response = await client.post("/graphql", json={"query": query})
 
         assert response.status_code == 200
         data = response.json()
@@ -86,19 +76,14 @@ class TestUserGraphQLQueries:
         }}
         """
 
-        response = await client.post(
-            "/graphql",
-            json={"query": query}
-        )
+        response = await client.post("/graphql", json={"query": query})
 
         assert response.status_code == 200
         data = response.json()
         assert "errors" not in data
         assert data["data"]["user"] is None
 
-    async def test_get_users_list(
-        self, client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_get_users_list(self, client: AsyncClient, db_session: AsyncSession):
         """Test getting list of users via GraphQL."""
         # Create multiple users
         users_data = [
@@ -115,9 +100,7 @@ class TestUserGraphQLQueries:
         ]
 
         for user_data in users_data:
-            response = await client.post(
-                "/api/users/register", json=user_data
-            )
+            response = await client.post("/api/users/register", json=user_data)
             assert response.status_code == 201
 
         # Query users list via GraphQL
@@ -132,10 +115,7 @@ class TestUserGraphQLQueries:
         }
         """
 
-        response = await client.post(
-            "/graphql",
-            json={"query": query}
-        )
+        response = await client.post("/graphql", json={"query": query})
 
         assert response.status_code == 200
         data = response.json()
@@ -158,9 +138,7 @@ class TestUserGraphQLQueries:
                 "password": "password123",
                 "user_type": "FARMER",
             }
-            response = await client.post(
-                "/api/users/register", json=user_data
-            )
+            response = await client.post("/api/users/register", json=user_data)
             assert response.status_code == 201
 
         # Test pagination
@@ -173,10 +151,7 @@ class TestUserGraphQLQueries:
         }
         """
 
-        response = await client.post(
-            "/graphql",
-            json={"query": query}
-        )
+        response = await client.post("/graphql", json={"query": query})
 
         assert response.status_code == 200
         data = response.json()
@@ -208,10 +183,7 @@ class TestUserGraphQLMutations:
         }
         """
 
-        response = await client.post(
-            "/graphql",
-            json={"query": mutation}
-        )
+        response = await client.post("/graphql", json={"query": mutation})
 
         assert response.status_code == 200
         data = response.json()
@@ -234,9 +206,7 @@ class TestUserGraphQLMutations:
         }
 
         # Create user via REST API first
-        rest_response = await client.post(
-            "/api/users/register", json=user_data
-        )
+        rest_response = await client.post("/api/users/register", json=user_data)
         assert rest_response.status_code == 201
 
         # Try to create same user via GraphQL
@@ -253,10 +223,7 @@ class TestUserGraphQLMutations:
         }
         """
 
-        response = await client.post(
-            "/graphql",
-            json={"query": mutation}
-        )
+        response = await client.post("/graphql", json={"query": mutation})
 
         assert response.status_code == 200
         data = response.json()
@@ -275,19 +242,14 @@ class TestUserGraphQLMutations:
         }
 
         # Create user
-        create_response = await client.post(
-            "/api/users/register", json=user_data
-        )
+        create_response = await client.post("/api/users/register", json=user_data)
         assert create_response.status_code == 201
         user_id = create_response.json()["id"]
 
         # Login to get token
         login_response = await client.post(
             "/api/users/login",
-            json={
-                "email": user_data["email"],
-                "password": user_data["password"]
-            }
+            json={"email": user_data["email"], "password": user_data["password"]},
         )
         assert login_response.status_code == 200
         token = login_response.json()["access_token"]
@@ -299,10 +261,7 @@ class TestUserGraphQLMutations:
         }}
         """
 
-        response = await client.post(
-            "/graphql",
-            json={"query": mutation}
-        )
+        response = await client.post("/graphql", json={"query": mutation})
 
         assert response.status_code == 200
         data = response.json()
@@ -320,9 +279,7 @@ class TestUserGraphQLMutations:
             "user_type": "FARMER",
         }
 
-        create_response = await client.post(
-            "/api/users/register", json=user_data
-        )
+        create_response = await client.post("/api/users/register", json=user_data)
         assert create_response.status_code == 201
         user_id = create_response.json()["id"]
 
@@ -333,10 +290,7 @@ class TestUserGraphQLMutations:
         }}
         """
 
-        response = await client.post(
-            "/graphql",
-            json={"query": mutation}
-        )
+        response = await client.post("/graphql", json={"query": mutation})
 
         assert response.status_code == 200
         data = response.json()
@@ -359,18 +313,13 @@ class TestUserGraphQLAuthentication:
         }
 
         # Create user
-        create_response = await client.post(
-            "/api/users/register", json=user_data
-        )
+        create_response = await client.post("/api/users/register", json=user_data)
         assert create_response.status_code == 201
 
         # Login to get token
         login_response = await client.post(
             "/api/users/login",
-            json={
-                "email": user_data["email"],
-                "password": user_data["password"]
-            }
+            json={"email": user_data["email"], "password": user_data["password"]},
         )
         assert login_response.status_code == 200
         token = login_response.json()["access_token"]
@@ -387,10 +336,7 @@ class TestUserGraphQLAuthentication:
         }}
         """
 
-        response = await client.post(
-            "/graphql",
-            json={"query": query}
-        )
+        response = await client.post("/graphql", json={"query": query})
 
         assert response.status_code == 200
         data = response.json()
@@ -409,10 +355,7 @@ class TestUserGraphQLAuthentication:
         }
         """
 
-        response = await client.post(
-            "/graphql",
-            json={"query": query}
-        )
+        response = await client.post("/graphql", json={"query": query})
 
         assert response.status_code == 200
         data = response.json()
