@@ -9,8 +9,6 @@ from uuid import UUID
 
 import strawberry
 
-from app.models.users.user import UserType as UserTypeEnum
-
 if TYPE_CHECKING:
     from app.models.users.user import User as UserModel
 
