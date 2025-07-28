@@ -113,3 +113,7 @@ openapi.json
 
 # Docker
 .dockerignore
+
+# Environment files
+.env
+.env.*

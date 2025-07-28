@@ -1,6 +1,7 @@
 """
 Application settings using Pydantic.
 """
+
 from functools import lru_cache
 from typing import List
 
@@ -16,13 +17,13 @@ class Settings(BaseSettings):
     debug: bool = True
 
     # Database
-    postgres_host: str = "localhost"
-    postgres_port: int = 5432
-    postgres_user: str = "myuser"
-    postgres_password: str = "mypassword"
-    postgres_db: str = "mydatabase"
-    database_url: str = (
-        "postgresql+asyncpg://myuser:mypassword@localhost:5432/mydatabase"
+    postgres_host: str = Field(default="localhost")
+    postgres_port: int = Field(default=5432)
+    postgres_user: str = Field(default="myuser")
+    postgres_password: str = Field(default="mypassword")
+    postgres_db: str = Field(default="mydatabase")
+    database_url: str = Field(
+        default="postgresql+asyncpg://myuser:mypassword@localhost:5432/mydatabase"
     )
 
     # Security

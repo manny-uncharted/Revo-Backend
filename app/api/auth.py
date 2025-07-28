@@ -1,6 +1,7 @@
 """
 Authentication API endpoints.
 """
+
 from datetime import timedelta
 from typing import Annotated, Dict
 
