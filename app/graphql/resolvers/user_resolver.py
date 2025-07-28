@@ -109,9 +109,9 @@ class UserMutation:
                 await db.delete(user)
                 await db.commit()
                 return True
-            except HTTPException as e:
-                # Convert HTTPException to Strawberry error
-                raise StrawberryGraphQLError(str(e.detail))
+            except HTTPException:
+                # Authentication failed - return False instead of raising error
+                return False
             except Exception:
                 # Log unexpected errors but don't expose internal details
                 raise StrawberryGraphQLError("Failed to delete user")
