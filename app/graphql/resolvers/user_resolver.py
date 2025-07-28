@@ -8,6 +8,7 @@ from uuid import UUID
 import strawberry
 from fastapi import HTTPException
 from sqlalchemy import select
+from strawberry.exceptions import GraphQLError
 
 from app.core.database import get_db
 from app.graphql.types.user_type import User, UserInput
@@ -83,10 +84,10 @@ class UserMutation:
                 return User.from_model(user_model)
             except HTTPException as e:
                 # Convert HTTPException to Strawberry error
-                raise strawberry.GraphQLError(str(e.detail))
+                raise GraphQLError(str(e.detail))
             except Exception:
                 # Log unexpected errors but don't expose internal details
-                raise strawberry.GraphQLError("Failed to create user")
+                raise GraphQLError("Failed to create user")
         raise RuntimeError("Database session not available")
 
     @strawberry.field
@@ -103,15 +104,15 @@ class UserMutation:
                 user = result.scalar_one_or_none()
 
                 if not user:
-                    raise strawberry.GraphQLError("User not found")
+                    raise GraphQLError("User not found")
 
                 await db.delete(user)
                 await db.commit()
                 return True
             except HTTPException as e:
                 # Convert HTTPException to Strawberry error
-                raise strawberry.GraphQLError(str(e.detail))
+                raise GraphQLError(str(e.detail))
             except Exception:
                 # Log unexpected errors but don't expose internal details
-                raise strawberry.GraphQLError("Failed to delete user")
+                raise GraphQLError("Failed to delete user")
         return False
