@@ -49,9 +49,7 @@ class UserQuery:
         """Get current authenticated user."""
         async for db in get_db():
             try:
-                user_model = await auth_service.get_current_user_from_token(
-                    db, token
-                )
+                user_model = await auth_service.get_current_user_from_token(db, token)
                 return User.from_model(user_model)
             except HTTPException:
                 return None
