@@ -182,6 +182,11 @@ mutation {
 }
 ```
 
+## Environment Setup
+
+1. Copy `.env.example` to `.env` and fill in your local credentials.
+2. **Never commit real secrets or credentials to version control.**
+
 ## Environment Variables
 
 Create a `.env` file from the example:

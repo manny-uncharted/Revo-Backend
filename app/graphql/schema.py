@@ -1,59 +1,37 @@
 """
-GraphQL schema for Farmers Marketplace - TEMPLATE.
-
-TODO: Contributors should implement the complete GraphQL schema.
-
-This is a minimal schema that needs to be expanded with:
-- User authentication mutations and queries
-- Farmer profile management
-- Product catalog operations
-- Order processing
-- Search and filtering functionality
-
+GraphQL schema for Farmers Marketplace.
 """
+
 from typing import Any
 
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 from strawberry.schema.schema import Schema
 
-# TODO: Import resolvers as they are implemented
-# from app.graphql.resolvers.user_resolver import UserResolver
-# from app.graphql.resolvers.farmer_resolver import FarmerResolver
+from app.graphql.resolvers.user_resolver import UserMutation, UserQuery
 
 
 @strawberry.type
-class Query:
+class Query(UserQuery):
     """
-    GraphQL queries - TEMPLATE.
-
-    TODO: Add queries for:
-    - users, farmers, products, orders
-    - search and filtering operations
-    - marketplace analytics
+    GraphQL queries for Farmers Marketplace.
     """
 
     @strawberry.field
     def hello(self) -> str:
-        """Basic hello query - remove when real queries are implemented."""
+        """Basic hello query."""
         return "Hello Farmers Marketplace! 🌾"
 
 
 @strawberry.type
-class Mutation:
+class Mutation(UserMutation):
     """
-    GraphQL mutations - TEMPLATE.
-
-    TODO: Add mutations for:
-    - user registration and authentication
-    - farmer profile creation
-    - product management
-    - order processing
+    GraphQL mutations for Farmers Marketplace.
     """
 
     @strawberry.field
     def placeholder(self) -> str:
-        """Placeholder mutation - remove when implemented."""
+        """Placeholder mutation."""
         return "Placeholder mutation"
 
 

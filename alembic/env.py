@@ -13,7 +13,7 @@ from alembic import context
 
 from app.core.config import get_settings
 from app.models.base import Base
-from app.models import User  # noqa: F401
+from app.models.users.user import User  # noqa: F401
 
 # TODO: Import all models here as they are implemented to ensure they are registered with SQLAlchemy
 # Examples:

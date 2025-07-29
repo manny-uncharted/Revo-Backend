@@ -1,6 +1,10 @@
 """
 User model for authentication.
 """
+
+import enum
+import uuid
+
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, func

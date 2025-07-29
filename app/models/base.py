@@ -1,6 +1,7 @@
 """
 Base model definitions for the application.
 """
+
 from datetime import datetime
 
 from sqlalchemy import func
