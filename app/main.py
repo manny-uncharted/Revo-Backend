@@ -13,7 +13,6 @@ TODO: Expand this application with:
 """
 
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Dict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,10 +23,12 @@ from app.api.users import router as users_router
 from app.core.config import get_settings
 from app.core.database import init_db
 from app.graphql.schema import graphql_router
+from app.api.auth import router as auth_router
+# from app.core.middleware import AuthenticationMiddleware
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     logger.info("Starting up...")
     await init_db()
@@ -40,7 +41,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 settings = get_settings()
 app = FastAPI(
     title="Farmers Marketplace API",
-    description="Backend API for connecting agricultural producers with consumers",  # noqa: E501
+    description="Backend API for connecting agricultural producers with consumers",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -56,15 +57,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+# Optional: Add authentication middleware for automatic route protection
+# Uncomment the lines below to enable automatic authentication for protected paths
+# app.add_middleware(
+#     AuthenticationMiddleware,
+#     protected_paths=["/api/v1/protected", "/api/v1/admin"],
+#     public_paths=["/", "/docs", "/redoc", "/auth/login", "/auth/register"],
+#     require_auth_by_default=False
+# )
+
+# Include GraphQL router
 app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
+
+# Include Authentication router
 app.include_router(auth_router, prefix="/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/users", tags=["users"])
 
 
 # Basic root endpoint
 @app.get("/", tags=["root"])
-async def root() -> Dict[str, str]:
+async def root():
     """Root endpoint."""
     return {
         "message": "🌾 Farmers Marketplace API",
@@ -76,7 +88,6 @@ async def root() -> Dict[str, str]:
 
 
 # TODO: Contributors should add additional routers and middleware:
-# app.include_router(auth_router, prefix="/auth", tags=["authentication"])
 # app.include_router(api_router, prefix="/api/v1", tags=["api"])
 # app.include_router(mobile_router, prefix="/mobile", tags=["mobile"])
 

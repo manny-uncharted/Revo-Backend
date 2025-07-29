@@ -1,41 +1,43 @@
 """
-User model for authentication and user management.
+User model for authentication.
 """
 
 import enum
 import uuid
-from datetime import datetime
-from uuid import UUID
 
-from sqlalchemy import String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 
 from app.models.base import Base
-
-
-class UserType(enum.Enum):
-    """User type enumeration."""
-
-    FARMER = "FARMER"
-    BUYER = "BUYER"
-    ADMIN = "ADMIN"
-
+from enum import Enum
 
 class User(Base):
-    """User model for authentication."""
-
+    """User model for authentication and user management."""
+    
     __tablename__ = "users"
-
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid.uuid4, index=True)
-    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String, nullable=False)
-    user_type: Mapped[UserType] = mapped_column(nullable=False)
-    is_active: Mapped[bool] = mapped_column(default=True)
-    is_verified: Mapped[bool] = mapped_column(default=False)
-    created_at: Mapped[datetime] = mapped_column(default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        default=func.now(), onupdate=func.now()
+    
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+    email = Column(String(100), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    full_name = Column(String(100), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_superuser = Column(Boolean, default=False, nullable=False)
+    
+    # Timestamps
+    created_at = Column(
+        DateTime(timezone=True), 
+        server_default=func.now(),
+        nullable=False
     )
-
+    updated_at = Column(
+        DateTime(timezone=True), 
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
+    
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, email={self.email}, user_type={self.user_type})>"
+        return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
+
