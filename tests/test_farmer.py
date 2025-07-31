@@ -33,7 +33,6 @@ class TestFarmerModel:
             user_id=user.id,
             farm_name="Test Farm",
             farm_size=50.0,
-            location="Test Location",
             organic_certified=True,
             description="A test farm"
         )
@@ -66,7 +65,6 @@ class TestFarmerModel:
             user_id=user.id,
             farm_name="Test Farm",
             farm_size=50.0,
-            location="Test Location",
             organic_certified=True,
             description="A test farm"
         )
@@ -99,7 +97,6 @@ class TestFarmerModel:
             "user_id": "123e4567-e89b-12d3-a456-426614174000",
             "farm_name": "Test Farm",
             "farm_size": 50.0,
-            "location": "Test Location",
             "organic_certified": True,
             "description": "A test farm"
         }
@@ -114,7 +111,6 @@ class TestFarmerModel:
             "user_id": "123e4567-e89b-12d3-a456-426614174000",
             "farm_name": "Test Farm",
             "farm_size": 50.0,
-            "location": "Test Location",
             "organic_certified": True,
             "description": "A test farm",
             "created_at": "2024-01-01T00:00:00",
@@ -149,7 +145,6 @@ class TestFarmerAPI:
             "user_id": user_id,
             "farm_name": "Test Farm",
             "farm_size": 50.0,
-            "location": "Test Location",
             "organic_certified": True,
             "description": "A test farm"
         }
