@@ -49,7 +49,7 @@ class TestFarmerCRUD:
             "password": "testpassword123",
             "user_type": "FARMER"
         }
-        user_response = await client.post("/auth/register", json=user_data)
+        user_response = await client.post("/api/users/register", json=user_data)
         assert user_response.status_code == 201
         user_id = user_response.json()["id"]
 
@@ -58,7 +58,7 @@ class TestFarmerCRUD:
             "email": "farmer@test.com",
             "password": "testpassword123"
         }
-        login_response = await client.post("/auth/login", json=login_data)
+        login_response = await client.post("/api/users/login", json=login_data)
         assert login_response.status_code == 200
         token = login_response.json()["access_token"]
 
@@ -89,10 +89,10 @@ class TestFarmerCRUD:
             "password": "testpassword123",
             "user_type": "FARMER"
         }
-        user_response = await client.post("/auth/register", json=user_data)
+        user_response = await client.post("/api/users/register", json=user_data)
         user_id = user_response.json()["id"]
 
-        login_response = await client.post("/auth/login", json={
+        login_response = await client.post("/api/users/login", json={
             "email": "duplicate@test.com",
             "password": "testpassword123"
         })
@@ -119,13 +119,13 @@ class TestFarmerCRUD:
         user1_data = {"email": "user1@test.com", "password": "testpassword123", "user_type": "FARMER"}
         user2_data = {"email": "user2@test.com", "password": "testpassword123", "user_type": "FARMER"}
         
-        user1_response = await client.post("/auth/register", json=user1_data)
-        user2_response = await client.post("/auth/register", json=user2_data)
+        user1_response = await client.post("/api/users/register", json=user1_data)
+        user2_response = await client.post("/api/users/register", json=user2_data)
         user1_id = user1_response.json()["id"]
         user2_id = user2_response.json()["id"]
 
         # Login as user1
-        login_response = await client.post("/auth/login", json={
+        login_response = await client.post("/api/users/login", json={
             "email": "user1@test.com",
             "password": "testpassword123"
         })
@@ -207,9 +207,9 @@ class TestFarmerAuthentication:
             "password": "testpassword123",
             "user_type": "FARMER"
         }
-        await client.post("/auth/register", json=user_data)
+        await client.post("/api/users/register", json=user_data)
         
-        login_response = await client.post("/auth/login", json={
+        login_response = await client.post("/api/users/login", json={
             "email": "noprofile@test.com",
             "password": "testpassword123"
         })
@@ -228,10 +228,10 @@ class TestFarmerAuthentication:
             "password": "testpassword123",
             "user_type": "FARMER"
         }
-        user_response = await client.post("/auth/register", json=user_data)
+        user_response = await client.post("/api/users/register", json=user_data)
         user_id = user_response.json()["id"]
 
-        login_response = await client.post("/auth/login", json={
+        login_response = await client.post("/api/users/login", json={
             "email": "myprofile@test.com",
             "password": "testpassword123"
         })
@@ -273,9 +273,9 @@ class TestFarmerUpdateDelete:
             "password": "testpassword123",
             "user_type": "FARMER"
         }
-        await client.post("/auth/register", json=user_data)
+        await client.post("/api/users/register", json=user_data)
         
-        login_response = await client.post("/auth/login", json={
+        login_response = await client.post("/api/users/login", json={
             "email": "update@test.com",
             "password": "testpassword123"
         })
@@ -295,10 +295,10 @@ class TestFarmerUpdateDelete:
             "password": "testpassword123",
             "user_type": "FARMER"
         }
-        user_response = await client.post("/auth/register", json=user_data)
+        user_response = await client.post("/api/users/register", json=user_data)
         user_id = user_response.json()["id"]
 
-        login_response = await client.post("/auth/login", json={
+        login_response = await client.post("/api/users/login", json={
             "email": "update@test.com",
             "password": "testpassword123"
         })
@@ -341,10 +341,10 @@ class TestFarmerUpdateDelete:
             "password": "testpassword123",
             "user_type": "FARMER"
         }
-        user_response = await client.post("/auth/register", json=user_data)
+        user_response = await client.post("/api/users/register", json=user_data)
         user_id = user_response.json()["id"]
 
-        login_response = await client.post("/auth/login", json={
+        login_response = await client.post("/api/users/login", json={
             "email": "delete@test.com",
             "password": "testpassword123"
         })
