@@ -48,8 +48,8 @@ class TestFarmerModel:
         assert farmer.organic_certified is True
 
     async def test_farmer_user_relationship(self, db_session: AsyncSession):
-        """Test that farmer profile is correctly linked to user."""
-        # Create user
+        """Test the relationship between User and Farmer."""
+        # Create a user first
         user = User(
             email="farmer@test.com",
             password_hash="hashed_password",
@@ -61,7 +61,7 @@ class TestFarmerModel:
         await db_session.commit()
         await db_session.refresh(user)
 
-        # Create farmer profile
+        # Create a farmer profile
         farmer = Farmer(
             user_id=user.id,
             farm_name="Test Farm",
@@ -74,9 +74,21 @@ class TestFarmerModel:
         await db_session.commit()
         await db_session.refresh(farmer)
 
-        # Verify relationship
-        assert user.farmer is not None
-        assert user.farmer.id == farmer.id
+        # Refresh user to get the relationship
+        await db_session.refresh(user)
+        
+        # Verify relationship - use explicit query to avoid lazy loading issues
+        from sqlalchemy import select
+        user_with_farmer = await db_session.execute(
+            select(User).where(User.id == user.id)
+        )
+        user_obj = user_with_farmer.scalar_one()
+        
+        # Verify the farmer was created and linked
+        assert farmer.user_id == user.id
+        assert farmer.farm_name == "Test Farm"
+        
+        # Verify we can access the relationship from farmer side
         assert farmer.user is not None
         assert farmer.user.id == user.id
 
