@@ -14,6 +14,7 @@ from app.models.users.user import UserType
 class UserBase(BaseModel):
     """Base user schema with common fields."""
 
+    username: str = Field(..., min_length=3, max_length=50, description="Username must be between 3 and 50 characters")
     email: EmailStr
     user_type: UserType
 
@@ -29,7 +30,7 @@ class UserCreate(UserBase):
 class UserLogin(BaseModel):
     """Schema for user login."""
 
-    email: EmailStr
+    username: str
     password: str
 
 
@@ -61,4 +62,4 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     """Token data schema."""
 
-    email: Optional[str] = None
+    username: Optional[str] = None

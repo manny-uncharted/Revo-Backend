@@ -1,35 +1,28 @@
 """
-User model for authentication.
+Test models for SQLite compatibility.
 """
 
-import enum
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from datetime import datetime
-
-from sqlalchemy import Boolean, Column, DateTime, String, func, Enum as SQLAlchemyEnum
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, func, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.models.base import Base
-from enum import Enum
+from app.models.users.user import UserType
 
 if TYPE_CHECKING:
     from app.models.farmers.farmer import Farmer
 
-class UserType(Enum):
-    """User type enumeration."""
-    FARMER = "FARMER"
-    BUYER = "BUYER"
-    ADMIN = "ADMIN"
 
-class User(Base):
-    """User model for authentication and user management."""
+class TestUser(Base):
+    """Test User model with Integer ID for SQLite compatibility."""
     
     __tablename__ = "users"
     
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -54,5 +47,4 @@ class User(Base):
     farmer: Mapped["Farmer"] = relationship("Farmer", back_populates="user", uselist=False)
     
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, email='{self.email}', user_type='{self.user_type}')>"
-
+        return f"<TestUser(id={self.id}, username='{self.username}', email='{self.email}', user_type='{self.user_type}')>" 
