@@ -16,6 +16,7 @@ class TestUserRegistration:
     ):
         """Test successful user registration."""
         user_data = {
+            "username": "testuser",
             "email": "test@example.com",
             "password": "testpassword123",
             "user_type": "FARMER",
@@ -37,6 +38,7 @@ class TestUserRegistration:
     ):
         """Test registration with duplicate email."""
         user_data = {
+            "username": "duplicateuser",
             "email": "duplicate@example.com",
             "password": "testpassword123",
             "user_type": "FARMER",
@@ -56,6 +58,7 @@ class TestUserRegistration:
     ):
         """Test registration with invalid email format."""
         user_data = {
+            "username": "testuser",
             "email": "invalid-email",
             "password": "testpassword123",
             "user_type": "FARMER",
@@ -69,6 +72,7 @@ class TestUserRegistration:
     ):
         """Test registration with password too short."""
         user_data = {
+            "username": "testuser",
             "email": "test@example.com",
             "password": "short",
             "user_type": "FARMER",
@@ -87,6 +91,7 @@ class TestUserLogin:
         """Test successful user login."""
         # Register user first
         user_data = {
+            "username": "loginuser",
             "email": "login@example.com",
             "password": "testpassword123",
             "user_type": "FARMER",
@@ -95,7 +100,7 @@ class TestUserLogin:
 
         # Login
         login_data = {
-            "email": "login@example.com",
+            "username": "loginuser",
             "password": "testpassword123",
         }
         response = await client.post("/api/users/login", json=login_data)
@@ -110,26 +115,26 @@ class TestUserLogin:
     ):
         """Test login with invalid credentials."""
         login_data = {
-            "email": "nonexistent@example.com",
+            "username": "nonexistentuser",
             "password": "wrongpassword",
         }
         response = await client.post("/api/users/login", json=login_data)
 
         assert response.status_code == 401
-        assert "Incorrect email or password" in response.json()["detail"]
+        assert "Incorrect username or password" in response.json()["detail"]
 
     async def test_login_user_nonexistent(
         self, client: AsyncClient, db_session: AsyncSession
     ):
         """Test login with non-existent user."""
         login_data = {
-            "email": "nonexistent@example.com",
+            "username": "nonexistentuser",
             "password": "testpassword123",
         }
         response = await client.post("/api/users/login", json=login_data)
 
         assert response.status_code == 401
-        assert "Incorrect email or password" in response.json()["detail"]
+        assert "Incorrect username or password" in response.json()["detail"]
 
 
 class TestUserAuthentication:
@@ -141,6 +146,7 @@ class TestUserAuthentication:
         """Test getting current user with valid token."""
         # Register and login user
         user_data = {
+            "username": "authuser",
             "email": "auth@example.com",
             "password": "testpassword123",
             "user_type": "FARMER",
@@ -148,7 +154,7 @@ class TestUserAuthentication:
         await client.post("/api/users/register", json=user_data)
 
         login_data = {
-            "email": "auth@example.com",
+            "username": "authuser",
             "password": "testpassword123",
         }
         login_response = await client.post("/api/users/login", json=login_data)
@@ -189,11 +195,13 @@ class TestUserCRUD:
         # Register a few users
         users_data = [
             {
+                "username": "user1",
                 "email": "user1@example.com",
                 "password": "testpassword123",
                 "user_type": "FARMER",
             },
             {
+                "username": "user2",
                 "email": "user2@example.com",
                 "password": "testpassword123",
                 "user_type": "BUYER",
@@ -217,6 +225,7 @@ class TestUserCRUD:
         """Test getting user by ID."""
         # Register user
         user_data = {
+            "username": f"testuser_{datetime.now().timestamp()}",
             "email": f"test_{datetime.now().timestamp()}@example.com",
             "password": "testpassword123",
             "user_type": "FARMER",
@@ -260,6 +269,7 @@ class TestUserCRUD:
         """Test updating user information."""
         # Register and login user
         user_data = {
+            "username": f"updateuser_{datetime.now().timestamp()}",
             "email": f"update_{datetime.now().timestamp()}@example.com",
             "password": "testpassword123",
             "user_type": "FARMER",
@@ -268,7 +278,7 @@ class TestUserCRUD:
         user_id = register_response.json()["id"]
 
         login_data = {
-            "email": user_data["email"],
+            "username": user_data["username"],
             "password": "testpassword123",
         }
         login_response = await client.post("/api/users/login", json=login_data)
