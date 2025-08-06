@@ -4,16 +4,13 @@ JWT authentication and security utilities.
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Union
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from pydantic import BaseModel
 
 from app.core.config import get_settings
 
 settings = get_settings()
-
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class Token(BaseModel):
@@ -52,7 +49,7 @@ def create_access_token(
     
     to_encode.update({"exp": expire})
     
-    encoded_jwt = jwt.encode(
+    encoded_jwt: str = jwt.encode(
         to_encode, settings.secret_key, algorithm=settings.algorithm
     )
     
@@ -98,7 +95,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if password is correct, False otherwise
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(
+        plain_password.encode('utf-8'),
+        hashed_password.encode('utf-8')
+    )
 
 
 def get_password_hash(password: str) -> str:
@@ -111,7 +111,9 @@ def get_password_hash(password: str) -> str:
     Returns:
         The hashed password
     """
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 
 def create_token_for_user(
