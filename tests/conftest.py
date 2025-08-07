@@ -81,7 +81,7 @@ async def db_session(initialize_database):
 
 
 @pytest.fixture
-async def client():
+async def client(initialize_database):
     """Get test client."""
     from httpx import ASGITransport
 

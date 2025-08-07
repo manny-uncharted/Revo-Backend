@@ -15,7 +15,7 @@ class FarmerCreate(FarmerBase):
     location: Optional[LocationCreate] = None
 
 class FarmerUpdate(FarmerBase):
-    pass
+    location: Optional[LocationCreate] = None
 
 class FarmerResponse(FarmerBase):
     id: UUID
